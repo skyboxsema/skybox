@@ -1011,6 +1011,22 @@ button.reset:hover:not(:has(> *)) {
 .product-item-image {
   background: var(--color-cream);
   overflow: hidden;
+  position: relative;
+}
+
+.product-item-in-cart {
+  background: var(--color-dark);
+  border-radius: 999px;
+  color: var(--color-gold-light);
+  font-size: 0.7rem;
+  font-weight: 500;
+  left: 0.75rem;
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0.75rem;
+  position: absolute;
+  text-transform: uppercase;
+  top: 0.75rem;
+  z-index: 1;
 }
 
 .product-item img {
@@ -1094,6 +1110,52 @@ button.reset:hover:not(:has(> *)) {
 
 .product-form .button {
   width: 100%;
+}
+
+.product-quantity {
+  align-items: center;
+  border: 1px solid var(--color-dark);
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.product-quantity form {
+  display: flex;
+}
+
+.product-quantity-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--color-dark);
+  cursor: pointer;
+  display: flex;
+  font-size: 1.1rem;
+  height: 2.5rem;
+  justify-content: center;
+  transition:
+    background 200ms ease,
+    color 200ms ease;
+  width: 2.5rem;
+}
+
+.product-quantity-button:hover:not(:disabled) {
+  background: var(--color-dark);
+  color: var(--color-light);
+}
+
+.product-quantity-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.product-quantity-value {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  min-width: 6rem;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .product-options-grid {

@@ -1,12 +1,22 @@
-import {Link, useNavigate} from 'react-router';
-import {type MappedProductOptions} from '@shopify/hydrogen';
+import {Suspense} from 'react';
+import {Await, Link, useNavigate, useRouteLoaderData} from 'react-router';
+import {
+  CartForm,
+  type MappedProductOptions,
+  useOptimisticCart,
+} from '@shopify/hydrogen';
 import type {
   Maybe,
   ProductOptionValueSwatch,
 } from '@shopify/hydrogen/storefront-api-types';
 import {AddToCartButton} from './AddToCartButton';
 import {useAside} from './Aside';
-import type {ProductFragment} from 'storefrontapi.generated';
+import {getUpdateKey} from './CartLineItem';
+import type {
+  CartApiQueryFragment,
+  ProductFragment,
+} from 'storefrontapi.generated';
+import type {RootLoader} from '~/root';
 
 export function ProductForm({
   productOptions,
@@ -16,7 +26,7 @@ export function ProductForm({
   selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
 }) {
   const navigate = useNavigate();
-  const {open} = useAside();
+  const rootData = useRouteLoaderData<RootLoader>('root');
   return (
     <div className="product-form">
       {productOptions.map((option) => {
@@ -97,26 +107,155 @@ export function ProductForm({
           </div>
         );
       })}
-      <AddToCartButton
-        disabled={!selectedVariant || !selectedVariant.availableForSale}
-        onClick={() => {
-          open('cart');
-        }}
-        lines={
-          selectedVariant
-            ? [
-                {
-                  merchandiseId: selectedVariant.id,
-                  quantity: 1,
-                  selectedVariant,
-                },
-              ]
-            : []
-        }
-      >
-        {selectedVariant?.availableForSale ? 'Add to cart' : 'Sold out'}
-      </AddToCartButton>
+      {selectedVariant?.availableForSale ? (
+        <Suspense
+          fallback={<ProductAddButton selectedVariant={selectedVariant} />}
+        >
+          <Await
+            resolve={rootData?.cart}
+            errorElement={
+              <ProductAddButton selectedVariant={selectedVariant} />
+            }
+          >
+            {(cart) => (
+              <ProductCartControls
+                cart={cart}
+                selectedVariant={selectedVariant}
+              />
+            )}
+          </Await>
+        </Suspense>
+      ) : (
+        <AddToCartButton disabled lines={[]}>
+          Sold out
+        </AddToCartButton>
+      )}
     </div>
+  );
+}
+
+type SelectedVariant = NonNullable<
+  ProductFragment['selectedOrFirstAvailableVariant']
+>;
+
+function ProductAddButton({
+  selectedVariant,
+}: {
+  selectedVariant: SelectedVariant;
+}) {
+  const {open} = useAside();
+  return (
+    <AddToCartButton
+      onClick={() => {
+        open('cart');
+      }}
+      lines={[
+        {
+          merchandiseId: selectedVariant.id,
+          quantity: 1,
+          selectedVariant,
+        },
+      ]}
+    >
+      Add to cart
+    </AddToCartButton>
+  );
+}
+
+/**
+ * Shows "Add to cart" until the selected variant is in the cart, then swaps
+ * to a quantity stepper. At quantity 1 the minus becomes a remove (trash) button.
+ */
+function ProductCartControls({
+  cart: originalCart,
+  selectedVariant,
+}: {
+  cart: CartApiQueryFragment | null | undefined;
+  selectedVariant: SelectedVariant;
+}) {
+  // Optimistic so the controls update as soon as a button is clicked
+  const cart = useOptimisticCart(originalCart);
+  const line = cart?.lines?.nodes?.find(
+    (line) => line.merchandise.id === selectedVariant.id,
+  );
+
+  if (!line) return <ProductAddButton selectedVariant={selectedVariant} />;
+
+  const {id: lineId, quantity, isOptimistic} = line;
+  const disabled = !!isOptimistic;
+
+  return (
+    <div className="product-quantity">
+      {quantity <= 1 ? (
+        <CartForm
+          fetcherKey={getUpdateKey([lineId])}
+          route="/cart"
+          action={CartForm.ACTIONS.LinesRemove}
+          inputs={{lineIds: [lineId]}}
+        >
+          <button
+            aria-label="Remove from cart"
+            className="product-quantity-button"
+            disabled={disabled}
+            type="submit"
+          >
+            <TrashIcon />
+          </button>
+        </CartForm>
+      ) : (
+        <CartForm
+          fetcherKey={getUpdateKey([lineId])}
+          route="/cart"
+          action={CartForm.ACTIONS.LinesUpdate}
+          inputs={{lines: [{id: lineId, quantity: quantity - 1}]}}
+        >
+          <button
+            aria-label="Decrease quantity"
+            className="product-quantity-button"
+            disabled={disabled}
+            type="submit"
+          >
+            &#8722;
+          </button>
+        </CartForm>
+      )}
+      <span className="product-quantity-value" aria-live="polite">
+        {quantity} in cart
+      </span>
+      <CartForm
+        fetcherKey={getUpdateKey([lineId])}
+        route="/cart"
+        action={CartForm.ACTIONS.LinesUpdate}
+        inputs={{lines: [{id: lineId, quantity: quantity + 1}]}}
+      >
+        <button
+          aria-label="Increase quantity"
+          className="product-quantity-button"
+          disabled={disabled}
+          type="submit"
+        >
+          &#43;
+        </button>
+      </CartForm>
+    </div>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="18"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      viewBox="0 0 24 24"
+      width="18"
+    >
+      <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+    </svg>
   );
 }
 
