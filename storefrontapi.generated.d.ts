@@ -334,6 +334,99 @@ export type FeaturedCollectionQuery = {
   };
 };
 
+export type HeroSlideFragment = Pick<StorefrontAPI.Metaobject, 'id'> & {
+  image?: StorefrontAPI.Maybe<{
+    reference?: StorefrontAPI.Maybe<
+      | {
+          __typename:
+            | 'Article'
+            | 'Collection'
+            | 'GenericFile'
+            | 'Metaobject'
+            | 'Model3d'
+            | 'Page'
+            | 'Product'
+            | 'ProductVariant'
+            | 'Video';
+        }
+      | ({__typename: 'MediaImage'} & {
+          image?: StorefrontAPI.Maybe<
+            Pick<
+              StorefrontAPI.Image,
+              'id' | 'url' | 'altText' | 'width' | 'height'
+            >
+          >;
+        })
+    >;
+  }>;
+  eyebrow?: StorefrontAPI.Maybe<Pick<StorefrontAPI.MetaobjectField, 'value'>>;
+  heading?: StorefrontAPI.Maybe<Pick<StorefrontAPI.MetaobjectField, 'value'>>;
+  text?: StorefrontAPI.Maybe<Pick<StorefrontAPI.MetaobjectField, 'value'>>;
+  buttonLabel?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.MetaobjectField, 'value'>
+  >;
+  buttonLink?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.MetaobjectField, 'value'>
+  >;
+  position?: StorefrontAPI.Maybe<Pick<StorefrontAPI.MetaobjectField, 'value'>>;
+};
+
+export type HeroSlidesQueryVariables = StorefrontAPI.Exact<{
+  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+}>;
+
+export type HeroSlidesQuery = {
+  metaobjects: {
+    nodes: Array<
+      Pick<StorefrontAPI.Metaobject, 'id'> & {
+        image?: StorefrontAPI.Maybe<{
+          reference?: StorefrontAPI.Maybe<
+            | {
+                __typename:
+                  | 'Article'
+                  | 'Collection'
+                  | 'GenericFile'
+                  | 'Metaobject'
+                  | 'Model3d'
+                  | 'Page'
+                  | 'Product'
+                  | 'ProductVariant'
+                  | 'Video';
+              }
+            | ({__typename: 'MediaImage'} & {
+                image?: StorefrontAPI.Maybe<
+                  Pick<
+                    StorefrontAPI.Image,
+                    'id' | 'url' | 'altText' | 'width' | 'height'
+                  >
+                >;
+              })
+          >;
+        }>;
+        eyebrow?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        heading?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        text?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        buttonLabel?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        buttonLink?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        position?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+      }
+    >;
+  };
+};
+
 export type RecommendedProductFragment = Pick<
   StorefrontAPI.Product,
   'id' | 'title' | 'handle'
@@ -1203,6 +1296,10 @@ interface GeneratedQueryTypes {
   '#graphql\n  fragment FeaturedCollection on Collection {\n    id\n    title\n    description\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n    handle\n  }\n  query FeaturedCollection($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 3, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...FeaturedCollection\n      }\n    }\n    products(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        featuredImage {\n          id\n          url\n          altText\n          width\n          height\n        }\n      }\n    }\n  }\n': {
     return: FeaturedCollectionQuery;
     variables: FeaturedCollectionQueryVariables;
+  };
+  '#graphql\n  fragment HeroSlide on Metaobject {\n    id\n    image: field(key: "image") {\n      reference {\n        __typename\n        ... on MediaImage {\n          image {\n            id\n            url\n            altText\n            width\n            height\n          }\n        }\n      }\n    }\n    eyebrow: field(key: "eyebrow") {\n      value\n    }\n    heading: field(key: "heading") {\n      value\n    }\n    text: field(key: "text") {\n      value\n    }\n    buttonLabel: field(key: "button_label") {\n      value\n    }\n    buttonLink: field(key: "button_link") {\n      value\n    }\n    position: field(key: "position") {\n      value\n    }\n  }\n  query HeroSlides($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    metaobjects(type: "hero_slide", first: 10) {\n      nodes {\n        ...HeroSlide\n      }\n    }\n  }\n': {
+    return: HeroSlidesQuery;
+    variables: HeroSlidesQueryVariables;
   };
   '#graphql\n  fragment RecommendedProduct on Product {\n    id\n    title\n    handle\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n  }\n  query RecommendedProducts ($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    products(first: 4, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...RecommendedProduct\n      }\n    }\n  }\n': {
     return: RecommendedProductsQuery;

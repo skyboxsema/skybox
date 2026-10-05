@@ -8,9 +8,16 @@ import type {
 } from 'storefrontapi.generated';
 import {ProductItem} from '~/components/ProductItem';
 import {MockShopNotice} from '~/components/MockShopNotice';
+import {
+  HeroSlider,
+  toHeroSlides,
+  type HeroSlideData,
+} from '~/components/HeroSlider';
 
-// Drop a file named hero.jpg (or .jpeg, .png, .webp) into app/assets to set
-// the hero image. Without one, the hero falls back to a store image.
+// Hero slides are managed in Shopify admin (Content > Metaobjects > Hero slide).
+// Until one exists, a single default slide shows: drop a file named hero.jpg
+// (or .jpeg, .png, .webp) into app/assets to set its image, otherwise it falls
+// back to a store image.
 const [localHeroImage] = Object.values(
   import.meta.glob<string>('../assets/hero.{jpg,jpeg,png,webp}', {
     eager: true,
@@ -38,18 +45,23 @@ export async function loader(args: Route.LoaderArgs) {
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
  */
 async function loadCriticalData({context}: Route.LoaderArgs) {
-  const [{collections, products}] = await Promise.all([
+  const [{collections, products}, {metaobjects}] = await Promise.all([
     context.storefront.query(FEATURED_COLLECTION_QUERY),
-    // Add other queries here, so that they are loaded in parallel
+    context.storefront.query(HERO_SLIDES_QUERY),
   ]);
+
+  const shopifySlides = toHeroSlides(metaobjects.nodes);
+  const fallbackImage =
+    collections.nodes.find((collection) => collection.image)?.image ??
+    products.nodes[0]?.featuredImage ??
+    null;
 
   return {
     isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
     collections: collections.nodes,
-    heroImage:
-      collections.nodes.find((collection) => collection.image)?.image ??
-      products.nodes[0]?.featuredImage ??
-      null,
+    heroSlides: shopifySlides.length
+      ? shopifySlides
+      : [defaultHeroSlide(fallbackImage)],
   };
 }
 
@@ -77,7 +89,7 @@ export default function Homepage() {
   return (
     <div className="home">
       {data.isShopLinked ? null : <MockShopNotice />}
-      <Hero image={data.heroImage} />
+      <HeroSlider slides={data.heroSlides} />
       <HomeCollections collections={data.collections} />
       <RecommendedProducts products={data.recommendedProducts} />
       <BrandStory />
@@ -85,32 +97,20 @@ export default function Homepage() {
   );
 }
 
-// Placeholder copy: replace with the brand's own headline
-function Hero({image}: {image: FeaturedCollectionFragment['image']}) {
-  return (
-    <div className="hero">
-      <div className="hero-image">
-        {localHeroImage ? (
-          <img alt="" src={localHeroImage} />
-        ) : image ? (
-          <Image
-            alt={image.altText || ''}
-            data={image}
-            loading="eager"
-            sizes="(min-width: 48em) 50vw, 100vw"
-          />
-        ) : null}
-      </div>
-      <div className="hero-content">
-        <p className="eyebrow">Sky Box With You</p>
-        <h1>Curated With Care.</h1>
-        <p>A short line about what you offer and who it is for goes here.</p>
-        <Link className="button" prefetch="intent" to="/collections/all">
-          Shop now
-        </Link>
-      </div>
-    </div>
-  );
+// Placeholder copy, shown only until a hero slide is added in Shopify
+function defaultHeroSlide(
+  image: FeaturedCollectionFragment['image'],
+): HeroSlideData {
+  return {
+    id: 'default',
+    image: image ?? null,
+    localImage: localHeroImage,
+    eyebrow: 'Sky Box With You',
+    heading: 'Curated With Care.',
+    text: 'A short line about what you offer and who it is for goes here.',
+    buttonLabel: 'Shop now',
+    buttonLink: '/collections/all',
+  };
 }
 
 function HomeCollections({
@@ -232,6 +232,52 @@ const FEATURED_COLLECTION_QUERY = `#graphql
           width
           height
         }
+      }
+    }
+  }
+` as const;
+
+const HERO_SLIDES_QUERY = `#graphql
+  fragment HeroSlide on Metaobject {
+    id
+    image: field(key: "image") {
+      reference {
+        __typename
+        ... on MediaImage {
+          image {
+            id
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
+    }
+    eyebrow: field(key: "eyebrow") {
+      value
+    }
+    heading: field(key: "heading") {
+      value
+    }
+    text: field(key: "text") {
+      value
+    }
+    buttonLabel: field(key: "button_label") {
+      value
+    }
+    buttonLink: field(key: "button_link") {
+      value
+    }
+    position: field(key: "position") {
+      value
+    }
+  }
+  query HeroSlides($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    metaobjects(type: "hero_slide", first: 10) {
+      nodes {
+        ...HeroSlide
       }
     }
   }

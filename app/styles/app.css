@@ -18,10 +18,10 @@
   --color-gold-deep: #86672f;
   --color-line: rgba(21, 18, 14, 0.12);
   --color-line-strong: rgba(21, 18, 14, 0.35);
-  --font-display: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia,
-    serif;
-  --font-body: 'Jost Variable', 'Jost', system-ui, -apple-system, 'Segoe UI',
-    sans-serif;
+  --font-display:
+    'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+  --font-body:
+    'Jost Variable', 'Jost', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 img {
@@ -689,11 +689,101 @@ button.reset:hover:not(:has(> *)) {
   }
 }
 
+/* hero slider: slides share one grid cell and cross-fade */
+.hero-slider {
+  background: var(--color-cream);
+  display: grid;
+  margin: 0 calc(-1 * var(--page-gutter));
+  position: relative;
+}
+
+.hero-slider > .hero {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transition:
+    opacity 0.8s ease,
+    visibility 0s linear 0.8s;
+  visibility: hidden;
+}
+
+.hero-slider > .hero[data-active='true'] {
+  opacity: 1;
+  transition: opacity 0.8s ease;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slider > .hero,
+  .hero-slider > .hero[data-active='true'] {
+    transition: none;
+  }
+}
+
+.hero-slider:has(.hero-slider-controls) .hero-content {
+  padding-bottom: 6rem;
+}
+
+.hero-slider-controls {
+  align-items: center;
+  bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  left: var(--page-gutter);
+  position: absolute;
+  @media (min-width: 48em) {
+    left: calc(50% + clamp(2rem, 7vw, 7rem));
+    bottom: 2.5rem;
+  }
+}
+
+.hero-slider-arrow {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--color-line-strong);
+  color: var(--color-dark);
+  cursor: pointer;
+  display: flex;
+  font-size: 1.4rem;
+  height: 2.5rem;
+  justify-content: center;
+  line-height: 1;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+  width: 2.5rem;
+}
+
+.hero-slider-arrow:hover {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+}
+
+.hero-slider-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hero-slider-dot {
+  background: var(--color-line-strong);
+  border: 0;
+  cursor: pointer;
+  height: 2px;
+  padding: 0;
+  transition:
+    background 0.2s,
+    width 0.3s;
+  width: 1.5rem;
+}
+
+.hero-slider-dot[aria-current='true'] {
+  background: var(--color-gold-deep);
+  width: 3rem;
+}
+
 /* split hero: image beside a cream panel, stacked on phones */
 .hero {
   background: var(--color-cream);
   display: grid;
-  margin: 0 calc(-1 * var(--page-gutter));
   @media (min-width: 48em) {
     grid-template-columns: 1fr 1fr;
     min-height: clamp(30rem, 72vh, 46rem);
@@ -729,7 +819,7 @@ button.reset:hover:not(:has(> *)) {
   }
 }
 
-.hero-content h1 {
+.hero-content .hero-heading {
   font-size: clamp(2.6rem, 5.5vw, 4.75rem);
   line-height: 1.05;
   margin: 0 0 1.5rem;
@@ -762,7 +852,7 @@ button.reset:hover:not(:has(> *)) {
   padding-right: var(--page-gutter);
 }
 
-.hero + .home-collections {
+.hero-slider + .home-collections {
   border-top: 1px solid var(--color-line);
 }
 
