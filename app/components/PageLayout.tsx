@@ -28,7 +28,7 @@ export function PageLayout({
     <Aside.Provider>
       <CartAside cart={cart} />
       <SearchAside />
-      <MobileMenuAside />
+      {header && <MobileMenuAside header={header} />}
       {header && <Header header={header} cart={cart} isLoggedIn={isLoggedIn} />}
       <main>{children}</main>
       <Footer header={header} />
@@ -132,10 +132,10 @@ function SearchAside() {
   );
 }
 
-function MobileMenuAside() {
+function MobileMenuAside({header}: {header: PageLayoutProps['header']}) {
   return (
     <Aside type="mobile" heading="MENU">
-      <HeaderMenu viewport="mobile" />
+      <HeaderMenu viewport="mobile" header={header} />
     </Aside>
   );
 }

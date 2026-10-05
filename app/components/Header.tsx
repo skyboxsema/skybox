@@ -7,6 +7,7 @@ import {
 } from '@shopify/hydrogen';
 import type {HeaderQuery, CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
+import logo from '~/assets/logo.webp';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -27,18 +28,37 @@ export function Header({header, isLoggedIn, cart}: HeaderProps) {
           <SearchToggle className="header-search-desktop" />
         </div>
         <NavLink className="header-brand" prefetch="intent" to="/" end>
-          {shop.name}
+          <img alt={shop.name} height={242} src={logo} width={900} />
         </NavLink>
         <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} />
-        <HeaderMenu viewport="desktop" />
+        <HeaderMenu viewport="desktop" header={header} />
       </header>
     </>
   );
 }
 
-export function HeaderMenu({viewport}: {viewport: Viewport}) {
+export function HeaderMenu({
+  viewport,
+  header,
+}: {
+  viewport: Viewport;
+  header: HeaderQuery;
+}) {
   const className = `header-menu-${viewport}`;
   const {close} = useAside();
+  const menu = header.collections.nodes
+    .filter((collection) => !HIDDEN_COLLECTIONS.includes(collection.handle))
+    // ordered by the collection's "Menu order" metafield; collections without
+    // one go last, A–Z (the query already sorts by title)
+    .map((collection, index) => ({
+      collection,
+      order: Number(collection.menuOrder?.value ?? '') || 1000 + index,
+    }))
+    .sort((a, b) => a.order - b.order)
+    .map(({collection}) => ({
+      title: collection.title,
+      url: `/collections/${collection.handle}`,
+    }));
 
   return (
     <nav className={className} role="navigation">
@@ -47,7 +67,7 @@ export function HeaderMenu({viewport}: {viewport: Viewport}) {
           Home
         </NavLink>
       )}
-      {HEADER_MENU.map((item) => (
+      {menu.map((item) => (
         <NavLink
           className="header-menu-item"
           end
@@ -214,9 +234,6 @@ function CartIcon() {
 // Text of the bar above the header
 const ANNOUNCEMENT = 'Curated with care · Delivered to your door';
 
-// The header menu is defined here instead of in the Shopify admin
-const HEADER_MENU = [
-  {title: 'Shop', url: '/collections/all'},
-  {title: 'Collections', url: '/collections'},
-  {title: 'Contact', url: '/pages/contact'},
-];
+// The header menu lists every collection in the store, except these
+// handles ('frontpage' is Shopify's built-in home page collection)
+const HIDDEN_COLLECTIONS = ['frontpage'];

@@ -293,6 +293,13 @@ export type HeaderQuery = {
       }>;
     }>;
   };
+  collections: {
+    nodes: Array<
+      Pick<StorefrontAPI.Collection, 'id' | 'title' | 'handle'> & {
+        menuOrder?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      }
+    >;
+  };
 };
 
 export type FeaturedCollectionFragment = Pick<
@@ -1289,7 +1296,7 @@ export type PredictiveSearchQuery = {
 };
 
 interface GeneratedQueryTypes {
-  '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n  }\n  query Header(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n  }\n': {
+  '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n  }\n  query Header(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    collections(first: 20, sortKey: TITLE) {\n      nodes {\n        id\n        title\n        handle\n        menuOrder: metafield(namespace: "custom", key: "menu_order") {\n          value\n        }\n      }\n    }\n  }\n': {
     return: HeaderQuery;
     variables: HeaderQueryVariables;
   };

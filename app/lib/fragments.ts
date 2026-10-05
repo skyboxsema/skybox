@@ -194,5 +194,15 @@ export const HEADER_QUERY = `#graphql
     shop {
       ...Shop
     }
+    collections(first: 20, sortKey: TITLE) {
+      nodes {
+        id
+        title
+        handle
+        menuOrder: metafield(namespace: "custom", key: "menu_order") {
+          value
+        }
+      }
+    }
   }
 ` as const;
