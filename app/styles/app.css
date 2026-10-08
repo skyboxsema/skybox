@@ -598,9 +598,23 @@ button.reset:hover:not(:has(> *)) {
 }
 
 .footer-contact a {
+  align-items: center;
   color: var(--color-cream);
+  display: inline-flex;
   font-size: 0.8rem;
+  gap: 0.5rem;
   letter-spacing: 0.08em;
+}
+
+.footer-icon {
+  fill: none;
+  flex-shrink: 0;
+  height: 1.1rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+  width: 1.1rem;
 }
 
 .footer-contact a:hover {

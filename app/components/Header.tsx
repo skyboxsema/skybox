@@ -235,7 +235,8 @@ function CartIcon() {
 }
 
 // Text of the bar above the header
-const ANNOUNCEMENT = 'Curated with care · Delivered to your door';
+const ANNOUNCEMENT =
+  'DMV orders placed by 2:00 PM ET on business days ship the same day.';
 
 // The header menu lists every collection in the store, except these
 // handles ('frontpage' is Shopify's built-in home page collection)
