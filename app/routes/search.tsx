@@ -90,6 +90,28 @@ const SEARCH_PRODUCT_FRAGMENT = `#graphql
     title
     trackingParameters
     vendor
+    featuredImage {
+      id
+      altText
+      url
+      width
+      height
+    }
+    images(first: 10) {
+      nodes {
+        id
+        altText
+        url
+        width
+        height
+      }
+    }
+    priceRange {
+      minVariantPrice {
+        amount
+        currencyCode
+      }
+    }
     selectedOrFirstAvailableVariant(
       selectedOptions: []
       ignoreUnknownOptions: true

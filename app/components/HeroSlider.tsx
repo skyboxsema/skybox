@@ -13,11 +13,9 @@ export type HeroSlideData = {
   } | null;
   /** a bundled asset url, used instead of a Shopify image when set */
   localImage?: string;
-  eyebrow: string;
-  heading: string;
-  text: string;
-  buttonLabel: string;
-  buttonLink: string;
+  /** read by screen readers only; the slide itself shows just the image */
+  label: string;
+  link: string;
 };
 
 const AUTOPLAY_MS = 6000;
@@ -33,11 +31,8 @@ export function toHeroSlides(nodes: HeroSlideFragment[]): HeroSlideData[] {
           node.image?.reference?.__typename === 'MediaImage'
             ? (node.image.reference.image ?? null)
             : null,
-        eyebrow: node.eyebrow?.value ?? '',
-        heading: node.heading?.value ?? '',
-        text: node.text?.value ?? '',
-        buttonLabel: node.buttonLabel?.value ?? '',
-        buttonLink: node.buttonLink?.value ?? '',
+        label: node.heading?.value || node.buttonLabel?.value || '',
+        link: node.buttonLink?.value ?? '',
       },
     }))
     .sort((a, b) => a.order - b.order)
@@ -129,9 +124,19 @@ function HeroSlide({
   count: number;
   isActive: boolean;
 }) {
-  const isExternal = /^https?:\/\//.test(slide.buttonLink);
-  // only the first slide's heading is the page's h1
-  const Heading = index === 0 ? 'h1' : 'h2';
+  const isExternal = /^https?:\/\//.test(slide.link);
+  const imageAlt = slide.image?.altText || slide.label;
+
+  const image = slide.localImage ? (
+    <img alt={imageAlt} src={slide.localImage} />
+  ) : slide.image ? (
+    <Image
+      alt={imageAlt}
+      data={slide.image}
+      loading={index === 0 ? 'eager' : 'lazy'}
+      sizes="100vw"
+    />
+  ) : null;
 
   return (
     <div
@@ -142,36 +147,22 @@ function HeroSlide({
       aria-hidden={!isActive}
       data-active={isActive}
     >
-      <div className="hero-image">
-        {slide.localImage ? (
-          <img alt="" src={slide.localImage} />
-        ) : slide.image ? (
-          <Image
-            alt={slide.image.altText || ''}
-            data={slide.image}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            sizes="(min-width: 48em) 50vw, 100vw"
-          />
-        ) : null}
-      </div>
-      <div className="hero-content">
-        {slide.eyebrow && <p className="eyebrow">{slide.eyebrow}</p>}
-        {slide.heading && (
-          <Heading className="hero-heading">{slide.heading}</Heading>
-        )}
-        {slide.text && <p>{slide.text}</p>}
-        {slide.buttonLabel && slide.buttonLink ? (
-          isExternal ? (
-            <a className="button" href={slide.buttonLink}>
-              {slide.buttonLabel}
-            </a>
-          ) : (
-            <Link className="button" prefetch="intent" to={slide.buttonLink}>
-              {slide.buttonLabel}
-            </Link>
-          )
-        ) : null}
-      </div>
+      {!slide.link ? (
+        <div className="hero-image">{image}</div>
+      ) : isExternal ? (
+        <a className="hero-image" href={slide.link} tabIndex={isActive ? 0 : -1}>
+          {image}
+        </a>
+      ) : (
+        <Link
+          className="hero-image"
+          prefetch="intent"
+          to={slide.link}
+          tabIndex={isActive ? 0 : -1}
+        >
+          {image}
+        </Link>
+      )}
     </div>
   );
 }

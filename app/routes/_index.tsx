@@ -4,6 +4,7 @@ import {Suspense} from 'react';
 import {Image} from '@shopify/hydrogen';
 import type {
   FeaturedCollectionFragment,
+  RecommendedProductFragment,
   RecommendedProductsQuery,
 } from 'storefrontapi.generated';
 import {ProductItem} from '~/components/ProductItem';
@@ -58,11 +59,27 @@ async function loadCriticalData({context}: Route.LoaderArgs) {
 
   return {
     isShopLinked: Boolean(context.env.PUBLIC_STORE_DOMAIN),
-    collections: collections.nodes,
+    collections: homeCollections(collections.nodes),
     heroSlides: shopifySlides.length
       ? shopifySlides
       : [defaultHeroSlide(fallbackImage)],
   };
+}
+
+/**
+ * Picks the three collections for "Shop by Collection", ordered by their
+ * "Home order" metafield. Collections without one follow, most recently
+ * updated first (the query's order).
+ */
+function homeCollections(collections: FeaturedCollectionFragment[]) {
+  return collections
+    .map((collection, index) => ({
+      collection,
+      order: Number(collection.homeOrder?.value ?? '') || 1000 + index,
+    }))
+    .sort((a, b) => a.order - b.order)
+    .slice(0, 3)
+    .map(({collection}) => collection);
 }
 
 /**
@@ -73,6 +90,7 @@ async function loadCriticalData({context}: Route.LoaderArgs) {
 function loadDeferredData({context}: Route.LoaderArgs) {
   const recommendedProducts = context.storefront
     .query(RECOMMENDED_PRODUCTS_QUERY)
+    .then(selectedProducts)
     .catch((error: Error) => {
       // Log query errors, but don't throw them so the page can still render
       console.error(error);
@@ -83,6 +101,22 @@ function loadDeferredData({context}: Route.LoaderArgs) {
     recommendedProducts,
   };
 }
+
+/**
+ * "Our Selection" lists products whose "Show on homepage" metafield is ticked,
+ * most recently updated first. Until none are ticked, the latest products show.
+ */
+function selectedProducts(response: RecommendedProductsQuery) {
+  const products = response.products.nodes;
+  const ticked = products.filter(
+    (product) => product.showOnHomepage?.value === 'true',
+  );
+  return ticked.length
+    ? ticked.slice(0, MAX_SELECTED_PRODUCTS)
+    : products.slice(0, 4);
+}
+
+const MAX_SELECTED_PRODUCTS = 8;
 
 export default function Homepage() {
   const data = useLoaderData<typeof loader>();
@@ -97,7 +131,7 @@ export default function Homepage() {
   );
 }
 
-// Placeholder copy, shown only until a hero slide is added in Shopify
+// Placeholder slide, shown only until a hero slide is added in Shopify
 function defaultHeroSlide(
   image: FeaturedCollectionFragment['image'],
 ): HeroSlideData {
@@ -105,11 +139,8 @@ function defaultHeroSlide(
     id: 'default',
     image: image ?? null,
     localImage: localHeroImage,
-    eyebrow: 'Sky Box With You',
-    heading: 'Curated With Care.',
-    text: 'A short line about what you offer and who it is for goes here.',
-    buttonLabel: 'Shop now',
-    buttonLink: '/collections/all',
+    label: 'Shop now',
+    link: '/collections/all',
   };
 }
 
@@ -174,13 +205,13 @@ function BrandStory() {
 function RecommendedProducts({
   products,
 }: {
-  products: Promise<RecommendedProductsQuery | null>;
+  products: Promise<RecommendedProductFragment[] | null>;
 }) {
   return (
     <Suspense fallback={null}>
       <Await resolve={products}>
         {(response) =>
-          response?.products.nodes.length ? (
+          response?.length ? (
             <section
               className="recommended-products"
               aria-labelledby="recommended-products"
@@ -190,7 +221,7 @@ function RecommendedProducts({
                 <h2 id="recommended-products">Our Selection</h2>
               </div>
               <div className="recommended-products-grid">
-                {response.products.nodes.map((product) => (
+                {response.map((product) => (
                   <ProductItem key={product.id} product={product} />
                 ))}
               </div>
@@ -215,10 +246,13 @@ const FEATURED_COLLECTION_QUERY = `#graphql
       height
     }
     handle
+    homeOrder: metafield(namespace: "custom", key: "home_order") {
+      value
+    }
   }
   query FeaturedCollection($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    collections(first: 3, sortKey: UPDATED_AT, reverse: true) {
+    collections(first: 20, sortKey: UPDATED_AT, reverse: true) {
       nodes {
         ...FeaturedCollection
       }
@@ -301,10 +335,13 @@ const RECOMMENDED_PRODUCTS_QUERY = `#graphql
       width
       height
     }
+    showOnHomepage: metafield(namespace: "custom", key: "show_on_homepage") {
+      value
+    }
   }
   query RecommendedProducts ($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    products(first: 4, sortKey: UPDATED_AT, reverse: true) {
+    products(first: 100, sortKey: UPDATED_AT, reverse: true) {
       nodes {
         ...RecommendedProduct
       }

@@ -48,6 +48,9 @@ export function HeaderMenu({
   const {close} = useAside();
   const menu = header.collections.nodes
     .filter((collection) => !HIDDEN_COLLECTIONS.includes(collection.handle))
+    // hidden when the collection's "Show in menu" metafield is unticked;
+    // collections without the field set stay visible
+    .filter((collection) => collection.showInMenu?.value !== 'false')
     // ordered by the collection's "Menu order" metafield; collections without
     // one go last, A–Z (the query already sorts by title)
     .map((collection, index) => ({

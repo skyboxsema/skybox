@@ -202,6 +202,9 @@ export const HEADER_QUERY = `#graphql
         menuOrder: metafield(namespace: "custom", key: "menu_order") {
           value
         }
+        showInMenu: metafield(namespace: "custom", key: "show_in_menu") {
+          value
+        }
       }
     }
   }
