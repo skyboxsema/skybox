@@ -1064,18 +1064,34 @@ button.reset:hover:not(:has(> *)) {
 * routes/collections.$handle.tsx
 * --------------------------------------------------
 */
-.collection > h1,
 .collections > h1 {
   text-align: center;
 }
 
-.collection-description {
-  margin: 0 auto 2.5rem;
-  max-width: 95%;
-  text-align: center;
-  @media (min-width: 45em) {
-    max-width: 600px;
-  }
+.breadcrumbs {
+  font-size: 0.8rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumbs li + li::before {
+  content: '/';
+  padding: 0 0.3rem;
+}
+
+.breadcrumbs a {
+  color: inherit;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
 }
 
 .products-grid {
@@ -1086,6 +1102,12 @@ button.reset:hover:not(:has(> *)) {
     minmax(min(100%, var(--grid-item-width)), 1fr)
   );
   margin-bottom: 2rem;
+}
+
+.pagination-sentinel {
+  min-height: 1px;
+  padding: 1rem 0;
+  text-align: center;
 }
 
 .product-item a:hover {
@@ -1207,7 +1229,7 @@ button.reset:hover:not(:has(> *)) {
 
 .product-item h4 {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 500;
   line-height: 1.25;
   margin: 1rem 0 0.25rem;
@@ -1218,8 +1240,9 @@ button.reset:hover:not(:has(> *)) {
 }
 
 .product-item small {
-  font-size: 0.85rem;
+  font-size: 1.0rem;
   letter-spacing: 0.06em;
+  font-weight: bold;
 }
 
 /*
@@ -1487,4 +1510,124 @@ button.reset:hover:not(:has(> *)) {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+/*
+* --------------------------------------------------
+* components/BuildBoxIntro
+* --------------------------------------------------
+*/
+.build-box-intro {
+  background: var(--color-light);
+  border: 0;
+  color: var(--color-dark);
+  /* centred in the viewport (the global reset zeroes dialog margins) */
+  inset: 0;
+  margin: auto;
+  max-height: calc(100dvh - 2rem);
+  max-width: min(56rem, calc(100vw - 2rem));
+  padding: 0;
+  width: 100%;
+}
+
+.build-box-intro[open] {
+  animation: build-box-intro-in 400ms ease-out;
+}
+
+.build-box-intro::backdrop {
+  background: rgba(21, 18, 14, 0.55);
+}
+
+@keyframes build-box-intro-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+.build-box-intro-inner {
+  border-top: 3px solid var(--color-gold);
+  padding: clamp(1.75rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2.5rem);
+  position: relative;
+  text-align: center;
+}
+
+.build-box-intro h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.1;
+  margin-bottom: 1rem;
+}
+
+.build-box-intro-lead {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin: 0 auto 1.75rem;
+  max-width: 38rem;
+}
+
+button.reset.build-box-intro-close {
+  border: 1px solid var(--color-line-strong);
+  border-radius: 50%;
+  display: grid;
+  height: 2.25rem;
+  place-items: center;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  transition: border-color 200ms;
+  width: 2.25rem;
+}
+
+button.reset.build-box-intro-close:hover {
+  border-color: var(--color-gold);
+}
+
+.build-box-intro-close svg {
+  fill: none;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  width: 1rem;
+}
+
+.build-box-steps {
+  display: grid;
+  gap: 2rem;
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
+  @media (min-width: 48em) {
+    gap: 1.5rem;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.build-box-step-art svg {
+  display: block;
+  margin: 0 auto 1rem;
+  max-width: 11.5rem;
+  width: 100%;
+}
+
+.build-box-steps h3 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.build-box-steps h3 span {
+  color: var(--color-gold-deep);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.build-box-steps p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 16rem;
 }

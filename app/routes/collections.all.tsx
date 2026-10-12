@@ -56,6 +56,7 @@ export default function Collection() {
       <PaginatedResourceSection<CollectionItemFragment>
         connection={products}
         resourcesClassName="products-grid"
+        infiniteScroll
       >
         {({node: product, index}) => (
           <ProductItem

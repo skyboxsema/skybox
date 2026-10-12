@@ -4,6 +4,8 @@ import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {ProductItem} from '~/components/ProductItem';
+import {Breadcrumbs} from '~/components/Breadcrumbs';
+import {BuildBoxIntro} from '~/components/BuildBoxIntro';
 import type {ProductItemFragment} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = ({data}) => {
@@ -70,11 +72,18 @@ export default function Collection() {
 
   return (
     <div className="collection">
-      <h1>{collection.title}</h1>
-      <p className="collection-description">{collection.description}</p>
+      <Breadcrumbs
+        crumbs={[
+          {label: 'Home', to: '/'},
+          {label: 'Gift Boxes', to: '/collections'},
+          {label: collection.title},
+        ]}
+      />
+      <h1 className="sr-only">{collection.title}</h1>
       <PaginatedResourceSection<ProductItemFragment>
         connection={collection.products}
         resourcesClassName="products-grid"
+        infiniteScroll
       >
         {({node: product, index}) => (
           <ProductItem
@@ -84,6 +93,9 @@ export default function Collection() {
           />
         )}
       </PaginatedResourceSection>
+      {collection.handle === BUILD_YOUR_OWN_BOX_HANDLE && (
+        <BuildBoxIntro delay={2000} />
+      )}
       <Analytics.CollectionView
         data={{
           collection: {
@@ -95,6 +107,9 @@ export default function Collection() {
     </div>
   );
 }
+
+// Visitors to this collection see the "how it works" popup after 2 seconds
+const BUILD_YOUR_OWN_BOX_HANDLE = 'build-your-own-box';
 
 const PRODUCT_ITEM_FRAGMENT = `#graphql
   fragment MoneyProductItem on MoneyV2 {
