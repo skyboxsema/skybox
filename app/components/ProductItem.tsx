@@ -109,7 +109,7 @@ function ProductItemPhotos({
             aspectRatio="4/5"
             data={image}
             loading={index === 0 ? loading : 'lazy'}
-            sizes="(min-width: 45em) 400px, 100vw"
+            sizes="(min-width: 48em) 25vw, 50vw"
           />
         ))}
       </Link>

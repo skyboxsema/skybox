@@ -1,5 +1,6 @@
 import {NavLink} from 'react-router';
 import type {HeaderQuery} from 'storefrontapi.generated';
+import logo from '~/assets/logo.webp';
 
 interface FooterProps {
   header: HeaderQuery;
@@ -8,7 +9,9 @@ interface FooterProps {
 export function Footer({header}: FooterProps) {
   return (
     <footer className="footer">
-      <div className="footer-brand">{header.shop.name}</div>
+      <NavLink className="footer-brand" prefetch="intent" to="/" end>
+        <img alt={header.shop.name} height={242} src={logo} width={900} />
+      </NavLink>
       <FooterMenu />
       <div className="footer-contact">
         <a href={`mailto:${CONTACT_EMAIL}`}>

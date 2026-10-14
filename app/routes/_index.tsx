@@ -67,7 +67,7 @@ async function loadCriticalData({context}: Route.LoaderArgs) {
 }
 
 /**
- * Picks the three collections for "Shop by Collection", ordered by their
+ * Picks the four collections for "Shop by Collection", ordered by their
  * "Home order" metafield. Collections without one follow, most recently
  * updated first (the query's order).
  */
@@ -78,7 +78,7 @@ function homeCollections(collections: FeaturedCollectionFragment[]) {
       order: Number(collection.homeOrder?.value ?? '') || 1000 + index,
     }))
     .sort((a, b) => a.order - b.order)
-    .slice(0, 3)
+    .slice(0, 4)
     .map(({collection}) => collection);
 }
 
@@ -153,7 +153,6 @@ function HomeCollections({
   return (
     <section className="home-collections" aria-labelledby="home-collections">
       <div className="section-heading">
-        <p className="eyebrow">Explore</p>
         <h2 id="home-collections">Shop by Collection</h2>
       </div>
       <div className="home-collections-grid">
@@ -171,7 +170,7 @@ function HomeCollections({
                   aspectRatio="4/5"
                   data={collection.image}
                   loading="lazy"
-                  sizes="(min-width: 48em) 33vw, 100vw"
+                  sizes="(min-width: 48em) 25vw, 50vw"
                 />
               )}
             </div>
