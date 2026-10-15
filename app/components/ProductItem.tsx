@@ -14,6 +14,8 @@ import type {RootLoader} from '~/root';
 export function ProductItem({
   product,
   loading,
+  onOpen,
+  quickAdd,
   url,
 }: {
   product:
@@ -22,6 +24,11 @@ export function ProductItem({
     | RecommendedProductFragment
     | SearchProductFragment;
   loading?: 'eager' | 'lazy';
+  /** when set, the photo and title call this instead of linking to the
+   * product page (the Build Your Own Box page opens a quick view) */
+  onOpen?: () => void;
+  /** add-to-cart controls shown over the photo (the Build Your Own Box page) */
+  quickAdd?: React.ReactNode;
   /** overrides the product link, e.g. to carry search tracking params */
   url?: string;
 }) {
@@ -44,8 +51,10 @@ export function ProductItem({
           title={product.title}
           url={variantUrl}
           loading={loading}
+          onOpen={onOpen}
         />
-        {rootData?.cart && (
+        {quickAdd}
+        {!quickAdd && rootData?.cart && (
           <Suspense fallback={null}>
             <Await resolve={rootData.cart}>
               {(cart) => <InCartBadge cart={cart} handle={product.handle} />}
@@ -53,12 +62,25 @@ export function ProductItem({
           </Suspense>
         )}
       </div>
-      <Link prefetch="intent" to={variantUrl}>
-        <h4>{product.title}</h4>
-        <small>
-          <Money data={product.priceRange.minVariantPrice} />
-        </small>
-      </Link>
+      {onOpen ? (
+        <button
+          className="product-item-open reset"
+          onClick={onOpen}
+          type="button"
+        >
+          <h4>{product.title}</h4>
+          <small>
+            <Money data={product.priceRange.minVariantPrice} />
+          </small>
+        </button>
+      ) : (
+        <Link prefetch="intent" to={variantUrl}>
+          <h4>{product.title}</h4>
+          <small>
+            <Money data={product.priceRange.minVariantPrice} />
+          </small>
+        </Link>
+      )}
     </div>
   );
 }
@@ -71,13 +93,15 @@ function ProductItemPhotos({
   title,
   url,
   loading,
+  onOpen,
 }: {
   images: PhotoImage[];
   title: string;
   url: string;
   loading?: 'eager' | 'lazy';
+  onOpen?: () => void;
 }) {
-  const stripRef = useRef<HTMLAnchorElement>(null);
+  const stripRef = useRef<HTMLDivElement & HTMLAnchorElement>(null);
   const [active, setActive] = useState(0);
   const count = images.length;
 
@@ -88,31 +112,47 @@ function ProductItemPhotos({
     strip.scrollTo({left: next * strip.clientWidth, behavior: 'smooth'});
   };
 
+  const photos = images.map((image, index) => (
+    <Image
+      key={image.id}
+      alt={image.altText || title}
+      aspectRatio="4/5"
+      data={image}
+      loading={index === 0 ? loading : 'lazy'}
+      sizes="(min-width: 48em) 25vw, 50vw"
+    />
+  ));
+  const onScroll = (event: React.UIEvent<HTMLElement>) => {
+    const strip = event.currentTarget;
+    setActive(Math.round(strip.scrollLeft / strip.clientWidth));
+  };
+
   return (
     <>
-      <Link
-        ref={stripRef}
-        className="product-item-photos"
-        prefetch="intent"
-        to={url}
-        tabIndex={-1}
-        aria-hidden
-        onScroll={(event) => {
-          const strip = event.currentTarget;
-          setActive(Math.round(strip.scrollLeft / strip.clientWidth));
-        }}
-      >
-        {images.map((image, index) => (
-          <Image
-            key={image.id}
-            alt={image.altText || title}
-            aspectRatio="4/5"
-            data={image}
-            loading={index === 0 ? loading : 'lazy'}
-            sizes="(min-width: 48em) 25vw, 50vw"
-          />
-        ))}
-      </Link>
+      {/* hidden from assistive tech: the title below is the accessible link */}
+      {onOpen ? (
+        <div
+          ref={stripRef}
+          className="product-item-photos"
+          onClick={onOpen}
+          aria-hidden
+          onScroll={onScroll}
+        >
+          {photos}
+        </div>
+      ) : (
+        <Link
+          ref={stripRef}
+          className="product-item-photos"
+          prefetch="intent"
+          to={url}
+          tabIndex={-1}
+          aria-hidden
+          onScroll={onScroll}
+        >
+          {photos}
+        </Link>
+      )}
       {count > 1 && (
         <>
           <button

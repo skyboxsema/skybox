@@ -300,6 +300,9 @@ export type HeaderQuery = {
         showInMenu?: StorefrontAPI.Maybe<
           Pick<StorefrontAPI.Metafield, 'value'>
         >;
+        buildBoxCategory?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'value'>
+        >;
       }
     >;
   };
@@ -313,6 +316,9 @@ export type FeaturedCollectionFragment = Pick<
     Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
   >;
   homeOrder?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  buildBoxCategory?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Metafield, 'value'>
+  >;
 };
 
 export type FeaturedCollectionQueryVariables = StorefrontAPI.Exact<{
@@ -334,6 +340,9 @@ export type FeaturedCollectionQuery = {
           >
         >;
         homeOrder?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        buildBoxCategory?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'value'>
+        >;
       }
     >;
   };
@@ -643,6 +652,9 @@ export type CollectionQuery = {
       StorefrontAPI.Collection,
       'id' | 'handle' | 'title' | 'description'
     > & {
+      buildBoxCategory?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Metafield, 'value'>
+      >;
       products: {
         nodes: Array<
           Pick<StorefrontAPI.Product, 'id' | 'handle' | 'title'> & {
@@ -681,12 +693,150 @@ export type CollectionQuery = {
   >;
 };
 
+export type BuildBoxCategoryFragment = Pick<
+  StorefrontAPI.Collection,
+  'id' | 'handle'
+> & {
+  listingOrder?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  buildBoxCategory?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Metafield, 'value'>
+  >;
+};
+
+export type BuildBoxCategoriesQueryVariables = StorefrontAPI.Exact<{
+  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+}>;
+
+export type BuildBoxCategoriesQuery = {
+  collections: {
+    nodes: Array<
+      Pick<StorefrontAPI.Collection, 'id' | 'handle'> & {
+        listingOrder?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'value'>
+        >;
+        buildBoxCategory?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'value'>
+        >;
+      }
+    >;
+  };
+};
+
+export type QuickAddProductFragment = Pick<
+  StorefrontAPI.Product,
+  'id' | 'title' | 'descriptionHtml'
+> & {
+  variants: {
+    nodes: Array<
+      Pick<
+        StorefrontAPI.ProductVariant,
+        'id' | 'availableForSale' | 'title' | 'requiresShipping'
+      > & {
+        price: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
+        compareAtPrice?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>
+        >;
+        image?: StorefrontAPI.Maybe<
+          Pick<
+            StorefrontAPI.Image,
+            'id' | 'url' | 'altText' | 'width' | 'height'
+          >
+        >;
+        product: Pick<
+          StorefrontAPI.Product,
+          'id' | 'handle' | 'title' | 'vendor'
+        >;
+        selectedOptions: Array<
+          Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
+        >;
+      }
+    >;
+  };
+};
+
+export type BuildBoxCategoryQueryVariables = StorefrontAPI.Exact<{
+  handle: StorefrontAPI.Scalars['String']['input'];
+  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+  first?: StorefrontAPI.InputMaybe<StorefrontAPI.Scalars['Int']['input']>;
+}>;
+
+export type BuildBoxCategoryQuery = {
+  collection?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Collection, 'id' | 'handle' | 'title'> & {
+      products: {
+        nodes: Array<
+          Pick<
+            StorefrontAPI.Product,
+            'id' | 'handle' | 'title' | 'descriptionHtml'
+          > & {
+            featuredImage?: StorefrontAPI.Maybe<
+              Pick<
+                StorefrontAPI.Image,
+                'id' | 'altText' | 'url' | 'width' | 'height'
+              >
+            >;
+            images: {
+              nodes: Array<
+                Pick<
+                  StorefrontAPI.Image,
+                  'id' | 'altText' | 'url' | 'width' | 'height'
+                >
+              >;
+            };
+            priceRange: {
+              minVariantPrice: Pick<
+                StorefrontAPI.MoneyV2,
+                'amount' | 'currencyCode'
+              >;
+              maxVariantPrice: Pick<
+                StorefrontAPI.MoneyV2,
+                'amount' | 'currencyCode'
+              >;
+            };
+            variants: {
+              nodes: Array<
+                Pick<
+                  StorefrontAPI.ProductVariant,
+                  'id' | 'availableForSale' | 'title' | 'requiresShipping'
+                > & {
+                  price: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
+                  compareAtPrice?: StorefrontAPI.Maybe<
+                    Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>
+                  >;
+                  image?: StorefrontAPI.Maybe<
+                    Pick<
+                      StorefrontAPI.Image,
+                      'id' | 'url' | 'altText' | 'width' | 'height'
+                    >
+                  >;
+                  product: Pick<
+                    StorefrontAPI.Product,
+                    'id' | 'handle' | 'title' | 'vendor'
+                  >;
+                  selectedOptions: Array<
+                    Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
+                  >;
+                }
+              >;
+            };
+          }
+        >;
+      };
+    }
+  >;
+};
+
 export type CollectionFragment = Pick<
   StorefrontAPI.Collection,
   'id' | 'title' | 'handle'
 > & {
   image?: StorefrontAPI.Maybe<
     Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
+  >;
+  buildBoxCategory?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Metafield, 'value'>
   >;
 };
 
@@ -712,6 +862,9 @@ export type StoreCollectionsQuery = {
             StorefrontAPI.Image,
             'id' | 'url' | 'altText' | 'width' | 'height'
           >
+        >;
+        buildBoxCategory?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'value'>
         >;
       }
     >;
@@ -1375,11 +1528,11 @@ export type PredictiveSearchQuery = {
 };
 
 interface GeneratedQueryTypes {
-  '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n  }\n  query Header(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    collections(first: 20, sortKey: TITLE) {\n      nodes {\n        id\n        title\n        handle\n        menuOrder: metafield(namespace: "custom", key: "menu_order") {\n          value\n        }\n        showInMenu: metafield(namespace: "custom", key: "show_in_menu") {\n          value\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n  }\n  query Header(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    collections(first: 100, sortKey: TITLE) {\n      nodes {\n        id\n        title\n        handle\n        menuOrder: metafield(namespace: "custom", key: "menu_order") {\n          value\n        }\n        showInMenu: metafield(namespace: "custom", key: "show_in_menu") {\n          value\n        }\n        buildBoxCategory: metafield(\n          namespace: "custom"\n          key: "build_your_box_category"\n        ) {\n          value\n        }\n      }\n    }\n  }\n': {
     return: HeaderQuery;
     variables: HeaderQueryVariables;
   };
-  '#graphql\n  fragment FeaturedCollection on Collection {\n    id\n    title\n    description\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n    handle\n    homeOrder: metafield(namespace: "custom", key: "home_order") {\n      value\n    }\n  }\n  query FeaturedCollection($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 20, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...FeaturedCollection\n      }\n    }\n    products(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        featuredImage {\n          id\n          url\n          altText\n          width\n          height\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  fragment FeaturedCollection on Collection {\n    id\n    title\n    description\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n    handle\n    homeOrder: metafield(namespace: "custom", key: "home_order") {\n      value\n    }\n    buildBoxCategory: metafield(\n      namespace: "custom"\n      key: "build_your_box_category"\n    ) {\n      value\n    }\n  }\n  query FeaturedCollection($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 100, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...FeaturedCollection\n      }\n    }\n    products(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        featuredImage {\n          id\n          url\n          altText\n          width\n          height\n        }\n      }\n    }\n  }\n': {
     return: FeaturedCollectionQuery;
     variables: FeaturedCollectionQueryVariables;
   };
@@ -1403,11 +1556,19 @@ interface GeneratedQueryTypes {
     return: BlogsQuery;
     variables: BlogsQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment MoneyProductItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment ProductItem on Product {\n    id\n    handle\n    title\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    images(first: 10) {\n      nodes {\n        id\n        altText\n        url\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyProductItem\n      }\n      maxVariantPrice {\n        ...MoneyProductItem\n      }\n    }\n  }\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n      products(\n        first: $first,\n        last: $last,\n        before: $startCursor,\n        after: $endCursor\n      ) {\n        nodes {\n          ...ProductItem\n        }\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment MoneyProductItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment ProductItem on Product {\n    id\n    handle\n    title\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    images(first: 10) {\n      nodes {\n        id\n        altText\n        url\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyProductItem\n      }\n      maxVariantPrice {\n        ...MoneyProductItem\n      }\n    }\n  }\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n      buildBoxCategory: metafield(\n        namespace: "custom"\n        key: "build_your_box_category"\n      ) {\n        value\n      }\n      products(\n        first: $first,\n        last: $last,\n        before: $startCursor,\n        after: $endCursor\n      ) {\n        nodes {\n          ...ProductItem\n        }\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
     return: CollectionQuery;
     variables: CollectionQueryVariables;
   };
-  '#graphql\n  fragment Collection on Collection {\n    id\n    title\n    handle\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n  }\n  query StoreCollections(\n    $country: CountryCode\n    $endCursor: String\n    $first: Int\n    $language: LanguageCode\n    $last: Int\n    $startCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collections(\n      first: $first,\n      last: $last,\n      before: $startCursor,\n      after: $endCursor\n    ) {\n      nodes {\n        ...Collection\n      }\n      pageInfo {\n        hasNextPage\n        hasPreviousPage\n        startCursor\n        endCursor\n      }\n    }\n  }\n': {
+  '#graphql\n  fragment BuildBoxCategory on Collection {\n    id\n    handle\n    listingOrder: metafield(\n      namespace: "custom"\n      key: "build_your_box_listing_order"\n    ) {\n      value\n    }\n    buildBoxCategory: metafield(\n      namespace: "custom"\n      key: "build_your_box_category"\n    ) {\n      value\n    }\n  }\n  query BuildBoxCategories($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 100, sortKey: TITLE) {\n      nodes {\n        ...BuildBoxCategory\n      }\n    }\n  }\n': {
+    return: BuildBoxCategoriesQuery;
+    variables: BuildBoxCategoriesQueryVariables;
+  };
+  '#graphql\n  #graphql\n  fragment MoneyProductItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment ProductItem on Product {\n    id\n    handle\n    title\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    images(first: 10) {\n      nodes {\n        id\n        altText\n        url\n        width\n        height\n      }\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyProductItem\n      }\n      maxVariantPrice {\n        ...MoneyProductItem\n      }\n    }\n  }\n\n  fragment QuickAddProduct on Product {\n    id\n    title\n    descriptionHtml\n    variants(first: 10) {\n      nodes {\n        id\n        availableForSale\n        title\n        price {\n          amount\n          currencyCode\n        }\n        compareAtPrice {\n          amount\n          currencyCode\n        }\n        requiresShipping\n        image {\n          id\n          url\n          altText\n          width\n          height\n        }\n        product {\n          id\n          handle\n          title\n          vendor\n        }\n        selectedOptions {\n          name\n          value\n        }\n      }\n    }\n  }\n  query BuildBoxCategory(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      products(first: $first) {\n        nodes {\n          ...ProductItem\n          ...QuickAddProduct\n        }\n      }\n    }\n  }\n': {
+    return: BuildBoxCategoryQuery;
+    variables: BuildBoxCategoryQueryVariables;
+  };
+  '#graphql\n  fragment Collection on Collection {\n    id\n    title\n    handle\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n    buildBoxCategory: metafield(\n      namespace: "custom"\n      key: "build_your_box_category"\n    ) {\n      value\n    }\n  }\n  query StoreCollections(\n    $country: CountryCode\n    $endCursor: String\n    $first: Int\n    $language: LanguageCode\n    $last: Int\n    $startCursor: String\n  ) @inContext(country: $country, language: $language) {\n    collections(\n      first: $first,\n      last: $last,\n      before: $startCursor,\n      after: $endCursor\n    ) {\n      nodes {\n        ...Collection\n      }\n      pageInfo {\n        hasNextPage\n        hasPreviousPage\n        startCursor\n        endCursor\n      }\n    }\n  }\n': {
     return: StoreCollectionsQuery;
     variables: StoreCollectionsQueryVariables;
   };

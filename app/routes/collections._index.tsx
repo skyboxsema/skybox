@@ -3,6 +3,7 @@ import type {Route} from './+types/collections._index';
 import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import type {CollectionFragment} from 'storefrontapi.generated';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
+import {isBuildBoxCategory} from '~/lib/buildBox';
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -20,7 +21,7 @@ export async function loader(args: Route.LoaderArgs) {
  */
 async function loadCriticalData({context, request}: Route.LoaderArgs) {
   const paginationVariables = getPaginationVariables(request, {
-    pageBy: 4,
+    pageBy: 24,
   });
 
   const [{collections}] = await Promise.all([
@@ -30,7 +31,15 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
     // Add other queries here, so that they are loaded in parallel
   ]);
 
-  return {collections};
+  // build-your-box categories only appear on the Build Your Own Box page
+  return {
+    collections: {
+      ...collections,
+      nodes: collections.nodes.filter(
+        (collection) => !isBuildBoxCategory(collection),
+      ),
+    },
+  };
 }
 
 /**
@@ -103,6 +112,12 @@ const COLLECTIONS_QUERY = `#graphql
       altText
       width
       height
+    }
+    buildBoxCategory: metafield(
+      namespace: "custom"
+      key: "build_your_box_category"
+    ) {
+      value
     }
   }
   query StoreCollections(

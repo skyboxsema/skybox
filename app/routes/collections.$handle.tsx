@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {redirect, useLoaderData} from 'react-router';
 import type {Route} from './+types/collections.$handle';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
@@ -6,6 +7,12 @@ import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {ProductItem} from '~/components/ProductItem';
 import {Breadcrumbs} from '~/components/Breadcrumbs';
 import {BuildBoxIntro} from '~/components/BuildBoxIntro';
+import {
+  ProductQuickAdd,
+  type QuickAddProduct,
+} from '~/components/ProductQuickAdd';
+import {ProductQuickView} from '~/components/ProductQuickView';
+import {BUILD_YOUR_OWN_BOX_HANDLE, isBuildBoxCategory} from '~/lib/buildBox';
 import type {ProductItemFragment} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = ({data}) => {
@@ -26,7 +33,8 @@ export async function loader(args: Route.LoaderArgs) {
  * Load data necessary for rendering content above the fold. This is the critical data
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
  */
-async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
+async function loadCriticalData(args: Route.LoaderArgs) {
+  const {context, params, request} = args;
   const {handle} = params;
   const {storefront} = context;
   const paginationVariables = getPaginationVariables(request, {
@@ -37,11 +45,12 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
     throw redirect('/collections');
   }
 
-  const [{collection}] = await Promise.all([
+  const [{collection}, buildBoxCategories] = await Promise.all([
     storefront.query(COLLECTION_QUERY, {
       variables: {handle, ...paginationVariables},
       // Add other queries here, so that they are loaded in parallel
     }),
+    handle === BUILD_YOUR_OWN_BOX_HANDLE ? loadBuildBoxCategories(args) : [],
   ]);
 
   if (!collection) {
@@ -50,13 +59,56 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
     });
   }
 
+  // Build-your-box categories have no page of their own: send visitors to
+  // that category's section on the Build Your Own Box page
+  if (isBuildBoxCategory(collection)) {
+    throw redirect(
+      `/collections/${BUILD_YOUR_OWN_BOX_HANDLE}#${collection.handle}`,
+    );
+  }
+
   // The API handle might be localized, so redirect to the localized handle
   redirectIfHandleIsLocalized(request, {handle, data: collection});
 
   return {
     collection,
+    buildBoxCategories,
   };
 }
+
+/**
+ * The build-your-box categories with their products, ordered by the "Build
+ * your box listing order" metafield (A–Z after that). Categories with no
+ * products on the storefront yet are left out.
+ */
+async function loadBuildBoxCategories({context}: Route.LoaderArgs) {
+  const {storefront} = context;
+  const {collections} = await storefront.query(BUILD_BOX_CATEGORIES_QUERY);
+  const ordered = collections.nodes
+    .filter(isBuildBoxCategory)
+    .map((collection, index) => ({
+      collection,
+      order: Number(collection.listingOrder?.value ?? '') || 1000 + index,
+    }))
+    .sort((a, b) => a.order - b.order);
+
+  const categories = await Promise.all(
+    ordered.map(({collection}) =>
+      storefront
+        .query(BUILD_BOX_CATEGORY_QUERY, {
+          variables: {handle: collection.handle, first: MAX_CATEGORY_PRODUCTS},
+        })
+        .then((response) => response.collection),
+    ),
+  );
+
+  return categories.filter(
+    (category): category is NonNullable<typeof category> =>
+      Boolean(category?.products.nodes.length),
+  );
+}
+
+const MAX_CATEGORY_PRODUCTS = 50;
 
 /**
  * Load data for rendering content below the fold. This data is deferred and will be
@@ -68,7 +120,7 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 }
 
 export default function Collection() {
-  const {collection} = useLoaderData<typeof loader>();
+  const {collection, buildBoxCategories} = useLoaderData<typeof loader>();
 
   return (
     <div className="collection">
@@ -80,19 +132,23 @@ export default function Collection() {
         ]}
       />
       <h1 className="sr-only">{collection.title}</h1>
-      <PaginatedResourceSection<ProductItemFragment>
-        connection={collection.products}
-        resourcesClassName="products-grid"
-        infiniteScroll
-      >
-        {({node: product, index}) => (
-          <ProductItem
-            key={product.id}
-            product={product}
-            loading={index < 8 ? 'eager' : undefined}
-          />
-        )}
-      </PaginatedResourceSection>
+      {buildBoxCategories.length > 0 ? (
+        <BuildBoxCategories categories={buildBoxCategories} />
+      ) : (
+        <PaginatedResourceSection<ProductItemFragment>
+          connection={collection.products}
+          resourcesClassName="products-grid"
+          infiniteScroll
+        >
+          {({node: product, index}) => (
+            <ProductItem
+              key={product.id}
+              product={product}
+              loading={index < 8 ? 'eager' : undefined}
+            />
+          )}
+        </PaginatedResourceSection>
+      )}
       {collection.handle === BUILD_YOUR_OWN_BOX_HANDLE && (
         <BuildBoxIntro delay={2000} />
       )}
@@ -107,9 +163,6 @@ export default function Collection() {
     </div>
   );
 }
-
-// Visitors to this collection see the "how it works" popup after 2 seconds
-const BUILD_YOUR_OWN_BOX_HANDLE = 'build-your-own-box';
 
 const PRODUCT_ITEM_FRAGMENT = `#graphql
   fragment MoneyProductItem on MoneyV2 {
@@ -164,6 +217,12 @@ const COLLECTION_QUERY = `#graphql
       handle
       title
       description
+      buildBoxCategory: metafield(
+        namespace: "custom"
+        key: "build_your_box_category"
+      ) {
+        value
+      }
       products(
         first: $first,
         last: $last,
@@ -178,6 +237,144 @@ const COLLECTION_QUERY = `#graphql
           hasNextPage
           endCursor
           startCursor
+        }
+      }
+    }
+  }
+` as const;
+
+const BUILD_BOX_CATEGORIES_QUERY = `#graphql
+  fragment BuildBoxCategory on Collection {
+    id
+    handle
+    listingOrder: metafield(
+      namespace: "custom"
+      key: "build_your_box_listing_order"
+    ) {
+      value
+    }
+    buildBoxCategory: metafield(
+      namespace: "custom"
+      key: "build_your_box_category"
+    ) {
+      value
+    }
+  }
+  query BuildBoxCategories($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    collections(first: 100, sortKey: TITLE) {
+      nodes {
+        ...BuildBoxCategory
+      }
+    }
+  }
+` as const;
+
+/**
+ * Build Your Own Box: one section per category, in listing order. Products
+ * open in a quick view instead of their own page, so customers stay here.
+ */
+function BuildBoxCategories({
+  categories,
+}: {
+  categories: Awaited<ReturnType<typeof loadBuildBoxCategories>>;
+}) {
+  const [openProduct, setOpenProduct] = useState<QuickAddProduct | null>(
+    null,
+  );
+
+  return (
+    <>
+      {categories.map((category) => (
+        <section
+          aria-labelledby={`${category.handle}-title`}
+          className="build-box-category"
+          id={category.handle}
+          key={category.id}
+        >
+          <h2 id={`${category.handle}-title`}>{category.title}</h2>
+          <div className="products-grid">
+            {category.products.nodes.map((product) => (
+              <ProductItem
+                key={product.id}
+                onOpen={() => setOpenProduct(product)}
+                product={product}
+                quickAdd={
+                  <ProductQuickAdd
+                    onChooseOptions={() => setOpenProduct(product)}
+                    product={product}
+                  />
+                }
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+      <ProductQuickView
+        onClose={() => setOpenProduct(null)}
+        product={openProduct}
+      />
+    </>
+  );
+}
+
+// A category's products plus the variant details for adding them to the cart
+// straight from the card (the variant fields mirror the cart line's, so the
+// cart can show the line before Shopify confirms it)
+const BUILD_BOX_CATEGORY_QUERY = `#graphql
+  ${PRODUCT_ITEM_FRAGMENT}
+  fragment QuickAddProduct on Product {
+    id
+    title
+    descriptionHtml
+    variants(first: 10) {
+      nodes {
+        id
+        availableForSale
+        title
+        price {
+          amount
+          currencyCode
+        }
+        compareAtPrice {
+          amount
+          currencyCode
+        }
+        requiresShipping
+        image {
+          id
+          url
+          altText
+          width
+          height
+        }
+        product {
+          id
+          handle
+          title
+          vendor
+        }
+        selectedOptions {
+          name
+          value
+        }
+      }
+    }
+  }
+  query BuildBoxCategory(
+    $handle: String!
+    $country: CountryCode
+    $language: LanguageCode
+    $first: Int
+  ) @inContext(country: $country, language: $language) {
+    collection(handle: $handle) {
+      id
+      handle
+      title
+      products(first: $first) {
+        nodes {
+          ...ProductItem
+          ...QuickAddProduct
         }
       }
     }

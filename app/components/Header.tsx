@@ -7,6 +7,7 @@ import {
 } from '@shopify/hydrogen';
 import type {HeaderQuery, CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
+import {isBuildBoxCategory} from '~/lib/buildBox';
 import logo from '~/assets/logo.webp';
 
 interface HeaderProps {
@@ -48,6 +49,8 @@ export function HeaderMenu({
   const {close} = useAside();
   const menu = header.collections.nodes
     .filter((collection) => !HIDDEN_COLLECTIONS.includes(collection.handle))
+    // build-your-box categories only appear on the Build Your Own Box page
+    .filter((collection) => !isBuildBoxCategory(collection))
     // hidden when the collection's "Show in menu" metafield is unticked;
     // collections without the field set stay visible
     .filter((collection) => collection.showInMenu?.value !== 'false')

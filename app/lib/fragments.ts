@@ -194,7 +194,7 @@ export const HEADER_QUERY = `#graphql
     shop {
       ...Shop
     }
-    collections(first: 20, sortKey: TITLE) {
+    collections(first: 100, sortKey: TITLE) {
       nodes {
         id
         title
@@ -203,6 +203,12 @@ export const HEADER_QUERY = `#graphql
           value
         }
         showInMenu: metafield(namespace: "custom", key: "show_in_menu") {
+          value
+        }
+        buildBoxCategory: metafield(
+          namespace: "custom"
+          key: "build_your_box_category"
+        ) {
           value
         }
       }
