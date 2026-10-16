@@ -6,11 +6,21 @@ import {
   useState,
 } from 'react';
 import {useId} from 'react';
+import {useLocation} from 'react-router';
 
 type AsideType = 'search' | 'cart' | 'mobile' | 'closed';
+type AsideOptions = {
+  /**
+   * Opens without an overlay, so the page stays usable beside the aside and
+   * clicking it doesn't close the aside: only × or Escape does, or leaving
+   * the page
+   */
+  docked?: boolean;
+};
 type AsideContextValue = {
   type: AsideType;
-  open: (mode: AsideType) => void;
+  docked: boolean;
+  open: (mode: AsideType, options?: AsideOptions) => void;
   close: () => void;
 };
 
@@ -33,8 +43,9 @@ export function Aside({
   type: AsideType;
   heading: React.ReactNode;
 }) {
-  const {type: activeType, close} = useAside();
+  const {type: activeType, docked: activeDocked, close} = useAside();
   const expanded = type === activeType;
+  const docked = expanded && activeDocked;
   const id = useId();
   useEffect(() => {
     const abortController = new AbortController();
@@ -43,7 +54,11 @@ export function Aside({
       document.addEventListener(
         'keydown',
         function handler(event: KeyboardEvent) {
-          if (event.key === 'Escape') {
+          // Escape over an open modal (the quick view) closes that instead
+          if (
+            event.key === 'Escape' &&
+            !document.querySelector('dialog[open]')
+          ) {
             close();
           }
         },
@@ -55,12 +70,12 @@ export function Aside({
 
   return (
     <div
-      aria-modal
-      className={`overlay ${expanded ? 'expanded' : ''}`}
+      aria-modal={!docked}
+      className={`overlay ${expanded ? 'expanded' : ''} ${docked ? 'docked' : ''}`}
       role="dialog"
       aria-labelledby={id}
     >
-      <button className="close-outside" onClick={close} />
+      {!docked && <button className="close-outside" onClick={close} />}
       <aside>
         <header>
           <h3 id={id}>{heading}</h3>
@@ -77,14 +92,27 @@ export function Aside({
 const AsideContext = createContext<AsideContextValue | null>(null);
 
 Aside.Provider = function AsideProvider({children}: {children: ReactNode}) {
-  const [type, setType] = useState<AsideType>('closed');
+  const [{type, docked}, setState] = useState({
+    type: 'closed' as AsideType,
+    docked: false,
+  });
+  const {pathname} = useLocation();
+
+  // a docked aside belongs to the page it was opened on
+  useEffect(() => {
+    setState((state) =>
+      state.docked ? {type: 'closed', docked: false} : state,
+    );
+  }, [pathname]);
 
   return (
     <AsideContext.Provider
       value={{
         type,
-        open: setType,
-        close: () => setType('closed'),
+        docked,
+        open: (mode, options) =>
+          setState({type: mode, docked: Boolean(options?.docked)}),
+        close: () => setState({type: 'closed', docked: false}),
       }}
     >
       {children}

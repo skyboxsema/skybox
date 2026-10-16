@@ -32,8 +32,6 @@ These are placeholders in the code and need real wording:
 
 - [ ] Announcement bar: "Curated with care · Delivered to your door" (`app/components/Header.tsx`)
 - [ ] Hero headline and line: "Curated With Care." plus a filler sentence (`app/routes/_index.tsx`)
-- [ ] "Our story" section: "Made with intention." plus filler text (`app/routes/_index.tsx`)
-- [ ] Create an **About** page in Shopify (Content → Pages, handle `about`). The "Discover more" button links to it and currently leads to a "not found" page.
 - [ ] Optional: add `app/assets/hero.jpg` to choose the hero photo. Without it, the hero uses a collection or product image.
 
 ### 3. Store policies

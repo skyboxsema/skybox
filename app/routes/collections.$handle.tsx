@@ -6,6 +6,7 @@ import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {ProductItem} from '~/components/ProductItem';
 import {Breadcrumbs} from '~/components/Breadcrumbs';
+import {BuildBoxCartBar} from '~/components/BuildBoxCartBar';
 import {BuildBoxIntro} from '~/components/BuildBoxIntro';
 import {
   ProductQuickAdd,
@@ -16,7 +17,9 @@ import {BUILD_YOUR_OWN_BOX_HANDLE, isBuildBoxCategory} from '~/lib/buildBox';
 import type {ProductItemFragment} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `Sky Box With You | ${data?.collection.title ?? ''} Collection`}];
+  return [
+    {title: `Sky Box With You | ${data?.collection.title ?? ''} Collection`},
+  ];
 };
 
 export async function loader(args: Route.LoaderArgs) {
@@ -279,9 +282,7 @@ function BuildBoxCategories({
 }: {
   categories: Awaited<ReturnType<typeof loadBuildBoxCategories>>;
 }) {
-  const [openProduct, setOpenProduct] = useState<QuickAddProduct | null>(
-    null,
-  );
+  const [openProduct, setOpenProduct] = useState<QuickAddProduct | null>(null);
 
   return (
     <>
@@ -314,6 +315,7 @@ function BuildBoxCategories({
         onClose={() => setOpenProduct(null)}
         product={openProduct}
       />
+      <BuildBoxCartBar />
     </>
   );
 }

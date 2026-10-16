@@ -128,7 +128,6 @@ export default function Homepage() {
       <HeroSlider slides={data.heroSlides} />
       <HomeCollections collections={data.collections} />
       <RecommendedProducts products={data.recommendedProducts} />
-      <BrandStory />
     </div>
   );
 }
@@ -182,23 +181,6 @@ function HomeCollections({
           </Link>
         ))}
       </div>
-    </section>
-  );
-}
-
-// Placeholder copy: replace with the brand's own story
-function BrandStory() {
-  return (
-    <section className="brand-story" aria-labelledby="brand-story">
-      <p className="eyebrow">Our story</p>
-      <h2 id="brand-story">Made with intention.</h2>
-      <p>
-        Tell your brand story here: what you make, how you make it, and why it
-        matters.
-      </p>
-      <Link className="button" prefetch="intent" to="/pages/about">
-        Discover more
-      </Link>
     </section>
   );
 }

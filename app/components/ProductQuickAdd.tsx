@@ -7,6 +7,7 @@ import type {
   QuickAddProductFragment,
 } from 'storefrontapi.generated';
 import {AddToCartButton} from './AddToCartButton';
+import {useAside} from './Aside';
 import {CartLineStepper} from './CartLineStepper';
 import type {RootLoader} from '~/root';
 
@@ -85,6 +86,7 @@ export function VariantCartControls({
   stepperClassName?: string;
   variant: QuickAddVariant;
 }) {
+  const {open} = useAside();
   const line = findLine(cart, variant);
   if (line) {
     return (
@@ -103,6 +105,13 @@ export function VariantCartControls({
       lines={[
         {merchandiseId: variant.id, quantity: 1, selectedVariant: variant},
       ]}
+      // the cart stays open beside the page while the box is being built; on
+      // phones there's no room, so the bottom bar (BuildBoxCartBar) opens it
+      onClick={() => {
+        if (window.matchMedia('(min-width: 45em)').matches) {
+          open('cart', {docked: true});
+        }
+      }}
     >
       {addLabel}
     </AddToCartButton>
