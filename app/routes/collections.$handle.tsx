@@ -10,10 +10,16 @@ import {BuildBoxCartBar} from '~/components/BuildBoxCartBar';
 import {BuildBoxIntro} from '~/components/BuildBoxIntro';
 import {
   ProductQuickAdd,
+  WithCart,
+  cartQuantity,
   type QuickAddProduct,
 } from '~/components/ProductQuickAdd';
 import {ProductQuickView} from '~/components/ProductQuickView';
-import {BUILD_YOUR_OWN_BOX_HANDLE, isBuildBoxCategory} from '~/lib/buildBox';
+import {
+  BUILD_YOUR_OWN_BOX_HANDLE,
+  isBuildBoxCategory,
+  loadBuildBoxCategoryList,
+} from '~/lib/buildBox';
 import type {ProductItemFragment} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = ({data}) => {
@@ -86,17 +92,10 @@ async function loadCriticalData(args: Route.LoaderArgs) {
  */
 async function loadBuildBoxCategories({context}: Route.LoaderArgs) {
   const {storefront} = context;
-  const {collections} = await storefront.query(BUILD_BOX_CATEGORIES_QUERY);
-  const ordered = collections.nodes
-    .filter(isBuildBoxCategory)
-    .map((collection, index) => ({
-      collection,
-      order: Number(collection.listingOrder?.value ?? '') || 1000 + index,
-    }))
-    .sort((a, b) => a.order - b.order);
+  const ordered = await loadBuildBoxCategoryList(storefront);
 
   const categories = await Promise.all(
-    ordered.map(({collection}) =>
+    ordered.map((collection) =>
       storefront
         .query(BUILD_BOX_CATEGORY_QUERY, {
           variables: {handle: collection.handle, first: MAX_CATEGORY_PRODUCTS},
@@ -246,36 +245,13 @@ const COLLECTION_QUERY = `#graphql
   }
 ` as const;
 
-const BUILD_BOX_CATEGORIES_QUERY = `#graphql
-  fragment BuildBoxCategory on Collection {
-    id
-    handle
-    listingOrder: metafield(
-      namespace: "custom"
-      key: "build_your_box_listing_order"
-    ) {
-      value
-    }
-    buildBoxCategory: metafield(
-      namespace: "custom"
-      key: "build_your_box_category"
-    ) {
-      value
-    }
-  }
-  query BuildBoxCategories($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    collections(first: 100, sortKey: TITLE) {
-      nodes {
-        ...BuildBoxCategory
-      }
-    }
-  }
-` as const;
-
 /**
  * Build Your Own Box: one section per category, in listing order. Products
  * open in a quick view instead of their own page, so customers stay here.
+ *
+ * The first category holds the boxes themselves ("Choose Your Box" is step 1).
+ * Until one of its products is in the cart, the other categories' products
+ * can be browsed but not added.
  */
 function BuildBoxCategories({
   categories,
@@ -283,40 +259,65 @@ function BuildBoxCategories({
   categories: Awaited<ReturnType<typeof loadBuildBoxCategories>>;
 }) {
   const [openProduct, setOpenProduct] = useState<QuickAddProduct | null>(null);
+  const [boxCategory] = categories;
+  const boxVariants = boxCategory.products.nodes.flatMap(
+    (product) => product.variants.nodes,
+  );
+  const isBox = (product: QuickAddProduct) =>
+    boxCategory.products.nodes.some((box) => box.id === product.id);
 
   return (
-    <>
-      {categories.map((category) => (
-        <section
-          aria-labelledby={`${category.handle}-title`}
-          className="build-box-category"
-          id={category.handle}
-          key={category.id}
-        >
-          <h2 id={`${category.handle}-title`}>{category.title}</h2>
-          <div className="products-grid">
-            {category.products.nodes.map((product) => (
-              <ProductItem
-                key={product.id}
-                onOpen={() => setOpenProduct(product)}
-                product={product}
-                quickAdd={
-                  <ProductQuickAdd
-                    onChooseOptions={() => setOpenProduct(product)}
-                    product={product}
-                  />
-                }
-              />
-            ))}
-          </div>
-        </section>
-      ))}
-      <ProductQuickView
-        onClose={() => setOpenProduct(null)}
-        product={openProduct}
-      />
-      <BuildBoxCartBar />
-    </>
+    <WithCart>
+      {(cart) => {
+        const hasBox = cartQuantity(cart, boxVariants) > 0;
+        return (
+          <>
+            {categories.map((category) => {
+              const locked = !hasBox && category !== boxCategory;
+              return (
+                <section
+                  aria-labelledby={`${category.handle}-title`}
+                  className="build-box-category"
+                  data-locked={locked ? '' : undefined}
+                  id={category.handle}
+                  key={category.id}
+                >
+                  <h2 id={`${category.handle}-title`}>{category.title}</h2>
+                  {locked && (
+                    <p className="build-box-locked-note">
+                      Choose your box first, then fill it with gifts.{' '}
+                      <a href={`#${boxCategory.handle}`}>Choose a box ↑</a>
+                    </p>
+                  )}
+                  <div className="products-grid">
+                    {category.products.nodes.map((product) => (
+                      <ProductItem
+                        key={product.id}
+                        onOpen={() => setOpenProduct(product)}
+                        product={product}
+                        quickAdd={
+                          <ProductQuickAdd
+                            locked={locked}
+                            onChooseOptions={() => setOpenProduct(product)}
+                            product={product}
+                          />
+                        }
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+            <ProductQuickView
+              locked={!hasBox && openProduct !== null && !isBox(openProduct)}
+              onClose={() => setOpenProduct(null)}
+              product={openProduct}
+            />
+            <BuildBoxCartBar />
+          </>
+        );
+      }}
+    </WithCart>
   );
 }
 

@@ -1,16 +1,23 @@
 import {useEffect, useRef} from 'react';
 
+// Set when the popup opens; while it lasts the popup isn't shown again
+const SEEN_COOKIE = 'build_box_intro_seen';
+const SEEN_FOR_SECONDS = 60 * 60;
+
 /**
  * "How it works" popup for Build Your Box. Opens `delay` ms after the page
- * mounts (each time the visitor arrives on it) and closes on the ✕ button,
- * the main button, Escape, or a click on the backdrop.
+ * mounts, at most once an hour per visitor, and closes on the ✕ button, the
+ * main button, Escape, or a click on the backdrop.
  */
 export function BuildBoxIntro({delay = 2000}: {delay?: number}) {
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
+    if (hasSeenIntro()) return;
     const timer = window.setTimeout(() => {
-      if (!dialog.current?.open) dialog.current?.showModal();
+      if (dialog.current?.open) return;
+      dialog.current?.showModal();
+      document.cookie = `${SEEN_COOKIE}=1; max-age=${SEEN_FOR_SECONDS}; path=/; SameSite=Lax`;
     }, delay);
     return () => window.clearTimeout(timer);
   }, [delay]);
@@ -42,9 +49,8 @@ export function BuildBoxIntro({delay = 2000}: {delay?: number}) {
         <p className="eyebrow">Build your box</p>
         <h2 id="build-box-intro-title">Design Your Own Gift Box</h2>
         <p className="build-box-intro-lead">
-          Creating a thoughtful gift has never been easier. In just three
-          steps, build a box around the things they love, and we&rsquo;ll
-          ship it fast.
+          Creating a thoughtful gift has never been easier. In just three steps,
+          build a box around the things they love, and we&rsquo;ll ship it fast.
         </p>
 
         <ol className="build-box-steps">
@@ -65,6 +71,12 @@ export function BuildBoxIntro({delay = 2000}: {delay?: number}) {
       </div>
     </dialog>
   );
+}
+
+function hasSeenIntro() {
+  return document.cookie
+    .split('; ')
+    .some((cookie) => cookie.startsWith(`${SEEN_COOKIE}=`));
 }
 
 const STEPS = [

@@ -10,12 +10,15 @@ import {
 /**
  * Product details in a modal, so customers building a box never leave the
  * page: photos, price, options, add / quantity controls, description and
- * shipping notes. Open while `product` is set; `onClose` clears it.
+ * shipping notes. Open while `product` is set; `onClose` clears it. While
+ * `locked` (no box chosen yet) the product can't be added.
  */
 export function ProductQuickView({
+  locked = false,
   onClose,
   product,
 }: {
+  locked?: boolean;
   onClose: () => void;
   product: QuickAddProduct | null;
 }) {
@@ -49,12 +52,20 @@ export function ProductQuickView({
           <path d="M6 6l12 12M18 6 6 18" />
         </svg>
       </button>
-      {product && <QuickViewContent key={product.id} product={product} />}
+      {product && (
+        <QuickViewContent key={product.id} locked={locked} product={product} />
+      )}
     </dialog>
   );
 }
 
-function QuickViewContent({product}: {product: QuickAddProduct}) {
+function QuickViewContent({
+  locked,
+  product,
+}: {
+  locked: boolean;
+  product: QuickAddProduct;
+}) {
   const variants = product.variants.nodes;
   const images = product.images.nodes.length
     ? product.images.nodes
@@ -68,6 +79,7 @@ function QuickViewContent({product}: {product: QuickAddProduct}) {
         <QuickViewBody
           cart={cart}
           images={images}
+          locked={locked}
           product={product}
           // open on a variant already in the cart, else the first for sale
           initialVariantId={
@@ -87,11 +99,13 @@ function QuickViewBody({
   cart,
   images,
   initialVariantId,
+  locked,
   product,
 }: {
   cart: Parameters<typeof VariantCartControls>[0]['cart'];
   images: QuickAddProduct['images']['nodes'];
   initialVariantId: string | undefined;
+  locked: boolean;
   product: QuickAddProduct;
 }) {
   const variants = product.variants.nodes;
@@ -152,9 +166,15 @@ function QuickViewBody({
               addLabel="Add to box"
               cart={cart}
               label={(quantity) => quantity}
+              locked={locked}
               stepperClassName="product-quantity quick-view-stepper"
               variant={variant}
             />
+            {locked && !findLine(cart, variant) && (
+              <p className="quick-view-locked">
+                Choose your box first, then fill it with gifts.
+              </p>
+            )}
           </div>
         )}
 

@@ -1737,7 +1737,9 @@ button.reset.build-box-intro-close:hover {
 * --------------------------------------------------
 */
 .build-box-category {
-  margin-bottom: 3.5rem;
+  /* the only gap between categories: no section padding or grid margin */
+  margin-bottom: 3rem;
+  padding: 0;
   /* clear the header when jumped to from a #category link */
   scroll-margin-top: 2rem;
 }
@@ -1754,11 +1756,38 @@ button.reset.build-box-intro-close:hover {
 /* smaller product cards than the regular collection grid */
 .build-box-category .products-grid {
   grid-gap: 2rem 1rem;
+  margin-bottom: 0;
   grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   @media (min-width: 48em) {
     grid-gap: 2.5rem 1.25rem;
     grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
   }
+}
+
+/* no box chosen yet: these gifts can be browsed but not added */
+.build-box-category[data-locked] .products-grid {
+  opacity: 0.55;
+}
+
+.build-box-locked-note,
+.quick-view-locked {
+  color: var(--color-gold-deep);
+  font-size: 0.9rem;
+}
+
+.build-box-locked-note {
+  margin: -0.75rem 0 1.25rem;
+}
+
+.build-box-locked-note a {
+  color: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.quick-view-locked {
+  margin: 0.6rem 0 0;
 }
 
 /*

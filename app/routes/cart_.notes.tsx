@@ -10,6 +10,7 @@ import type {Route} from './+types/cart_.notes';
 import {Image} from '@shopify/hydrogen';
 import type {CartLineUpdateInput} from '@shopify/hydrogen/storefront-api-types';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
+import {loadBuildBoxCategoryList} from '~/lib/buildBox';
 
 // Saved as a line item property, so it shows on the item at checkout,
 // on the order in Shopify admin and on packing slips.
@@ -26,7 +27,10 @@ export const meta: Route.MetaFunction = () => {
 export async function loader({context}: Route.LoaderArgs) {
   const cart = await context.cart.get();
   if (!cart?.lines?.nodes?.length) throw redirect('/cart');
-  return {cart};
+  const lines = await getNoteLines(context, cart.lines.nodes);
+  // nothing to leave a note on: straight to checkout
+  if (!lines.length) throw redirect(cart.checkoutUrl);
+  return {lines};
 }
 
 export async function action({request, context}: Route.ActionArgs) {
@@ -36,7 +40,7 @@ export async function action({request, context}: Route.ActionArgs) {
   const form = await request.formData();
   const updates: CartLineUpdateInput[] = [];
 
-  for (const line of getTopLevelLines(cart.lines.nodes)) {
+  for (const line of await getNoteLines(context, cart.lines.nodes)) {
     const note = String(form.get(`note:${line.id}`) ?? '')
       .trim()
       .slice(0, NOTE_MAX_LENGTH);
@@ -67,7 +71,7 @@ export async function action({request, context}: Route.ActionArgs) {
 }
 
 export default function CartNotes() {
-  const {cart} = useLoaderData<typeof loader>();
+  const {lines} = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const navigation = useNavigation();
   const submitting = navigation.state !== 'idle';
@@ -77,14 +81,14 @@ export default function CartNotes() {
       <header className="contact-intro">
         <h1>Add a Note</h1>
         <p>
-          Anything we should know about a box? Leave a note for each item, or
-          leave it blank and continue to checkout.
+          Anything we should know about your box? Leave a note on it, or leave
+          it blank and continue to checkout.
         </p>
       </header>
 
       <Form method="post" className="contact-form">
         <ul className="cart-notes-lines">
-          {getTopLevelLines(cart.lines.nodes).map((line) => {
+          {lines.map((line) => {
             const {product, title, image} = line.merchandise;
             const variantTitle =
               title && title !== 'Default Title' ? title : null;
@@ -146,6 +150,64 @@ export default function CartNotes() {
 }
 
 type CartLines = CartApiQueryFragment['lines']['nodes'];
+
+/**
+ * The lines that get a note: the boxes. For a box built on the Build Your Own
+ * Box page that's the box itself, not the gifts that go in it (products in
+ * the other build-your-box categories). Anything else, such as a ready-made
+ * gift box, gets one too.
+ */
+async function getNoteLines(
+  {storefront}: Route.LoaderArgs['context'],
+  lines: CartLines,
+) {
+  const topLevelLines = getTopLevelLines(lines);
+  const productIds = [
+    ...new Set(topLevelLines.map((line) => line.merchandise.product.id)),
+  ];
+  const [categories, {nodes}] = await Promise.all([
+    loadBuildBoxCategoryList(storefront),
+    storefront.query(CART_PRODUCT_COLLECTIONS_QUERY, {
+      variables: {ids: productIds},
+    }),
+  ]);
+
+  const [boxCategory, ...giftCategories] = categories;
+  const giftCategoryIds = new Set(giftCategories.map(({id}) => id));
+  const collectionsByProduct = new Map(
+    nodes.flatMap((node) =>
+      node && 'collections' in node
+        ? [[node.id, node.collections.nodes.map(({id}) => id)] as const]
+        : [],
+    ),
+  );
+
+  return topLevelLines.filter((line) => {
+    const collectionIds =
+      collectionsByProduct.get(line.merchandise.product.id) ?? [];
+    if (boxCategory && collectionIds.includes(boxCategory.id)) return true;
+    return !collectionIds.some((id) => giftCategoryIds.has(id));
+  });
+}
+
+const CART_PRODUCT_COLLECTIONS_QUERY = `#graphql
+  query CartProductCollections(
+    $ids: [ID!]!
+    $country: CountryCode
+    $language: LanguageCode
+  ) @inContext(country: $country, language: $language) {
+    nodes(ids: $ids) {
+      ... on Product {
+        id
+        collections(first: 50) {
+          nodes {
+            id
+          }
+        }
+      }
+    }
+  }
+` as const;
 
 /** Child lines (bundle components and the like) belong to their parent line. */
 function getTopLevelLines(lines: CartLines) {

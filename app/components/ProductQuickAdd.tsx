@@ -18,12 +18,15 @@ export type QuickAddVariant = QuickAddProductFragment['variants']['nodes'][0];
  * Add button over a product card on the Build Your Own Box page. A product
  * with a single variant goes straight into the cart and the button becomes a
  * 🗑/− quantity + stepper; a product with options opens the quick view
- * (`onChooseOptions`) so the customer can pick one first.
+ * (`onChooseOptions`) so the customer can pick one first. While `locked` (no
+ * box chosen yet) nothing new can be added.
  */
 export function ProductQuickAdd({
+  locked = false,
   onChooseOptions,
   product,
 }: {
+  locked?: boolean;
   onChooseOptions: () => void;
   product: QuickAddProduct;
 }) {
@@ -42,6 +45,7 @@ export function ProductQuickAdd({
             >
               <button
                 className="button"
+                disabled={locked && !inCart}
                 onClick={onChooseOptions}
                 type="button"
               >
@@ -59,6 +63,7 @@ export function ProductQuickAdd({
             <VariantCartControls
               cart={cart}
               label={(quantity) => quantity}
+              locked={locked}
               stepperClassName="product-quantity product-item-quick-stepper"
               variant={variants[0]}
             />
@@ -71,18 +76,20 @@ export function ProductQuickAdd({
 
 /**
  * "Add" until the variant is in the cart, then a 🗑/− quantity + stepper;
- * "Sold out" when it can't be bought
+ * "Sold out" when it can't be bought. `locked` disables "Add".
  */
 export function VariantCartControls({
   addLabel = '+ Add',
   cart,
   label,
+  locked = false,
   stepperClassName,
   variant,
 }: {
   addLabel?: string;
   cart: Cart;
   label?: (quantity: number) => React.ReactNode;
+  locked?: boolean;
   stepperClassName?: string;
   variant: QuickAddVariant;
 }) {
@@ -97,6 +104,13 @@ export function VariantCartControls({
     return (
       <AddToCartButton disabled lines={[]}>
         Sold out
+      </AddToCartButton>
+    );
+  }
+  if (locked) {
+    return (
+      <AddToCartButton disabled lines={[]}>
+        {addLabel}
       </AddToCartButton>
     );
   }
