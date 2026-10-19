@@ -19,7 +19,7 @@ const NOTE_MAX_LENGTH = 250;
 
 export const meta: Route.MetaFunction = () => {
   return [
-    {title: 'Sky Box With You | Add a Note'},
+    {title: 'Sky Box With You | Add a Gift Message'},
     {name: 'robots', content: 'noindex'},
   ];
 };
@@ -81,8 +81,8 @@ export default function CartNotes() {
       <header className="contact-intro">
         <h1>Add a Note</h1>
         <p>
-          Anything we should know about your box? Leave a note on it, or leave
-          it blank and continue to checkout.
+Make your gift even more personal. Write your message below, and we’ll include it on a note card inside your gift box. Remember to add your name so they know who it’s from.
+Prefer no message? Leave this field blank and continue to checkout.
         </p>
       </header>
 

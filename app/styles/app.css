@@ -1365,6 +1365,9 @@ button.reset:hover:not(:has(> *)) {
 
 .product-image {
   background: var(--color-cream);
+  /* let vertical scrolling through, horizontal swipes change the photo */
+  touch-action: pan-y;
+  user-select: none;
 }
 
 .product-image img {
@@ -1431,6 +1434,40 @@ button.reset:hover:not(:has(> *)) {
 
 .product-form .button {
   width: 100%;
+}
+
+/* mobile: a bottom bar copy of add to cart that slides up as the in-page
+   button scrolls under the header (--reveal is set from ProductForm) */
+.product-cart-bar {
+  display: none;
+}
+
+@media (max-width: 44.99em) {
+  .product-cart-bar {
+    background: var(--color-light);
+    border-top: 1px solid var(--color-line);
+    bottom: 0;
+    box-shadow: 0 -6px 20px rgba(21, 18, 14, 0.08);
+    display: block;
+    left: 0;
+    padding: 0.75rem var(--page-gutter)
+      calc(0.75rem + env(safe-area-inset-bottom));
+    position: fixed;
+    right: 0;
+    transform: translateY(calc((1 - var(--reveal, 0)) * (100% + 1.5rem)));
+    will-change: transform;
+    z-index: 3;
+  }
+
+  .product-cart-bar .product-quantity {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* keep the bar from covering the end of the footer */
+  body:has(.product-cart-bar) .footer {
+    padding-bottom: 6rem;
+  }
 }
 
 .product-quantity {
@@ -1744,13 +1781,47 @@ button.reset.build-box-intro-close:hover {
   scroll-margin-top: 2rem;
 }
 
-.build-box-category h2 {
+.build-box-category-heading {
+  align-items: center;
   border-bottom: 1px solid var(--color-line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+}
+
+.build-box-category h2 {
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2rem);
   font-weight: 500;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
+  margin: 0;
+}
+
+/* beside the boxes' title until a box is in the cart */
+.build-box-warning {
+  align-items: center;
+  background: var(--color-cream);
+  border: 1px solid var(--color-gold);
+  border-radius: 999px;
+  color: var(--color-gold-deep);
+  display: inline-flex;
+  font-size: 0.85rem;
+  font-weight: 500;
+  gap: 0.5rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.35rem;
+}
+
+.build-box-warning span {
+  background: var(--color-gold);
+  border-radius: 50%;
+  color: var(--color-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+  height: 1.3rem;
+  line-height: 1.3rem;
+  text-align: center;
+  width: 1.3rem;
 }
 
 /* smaller product cards than the regular collection grid */

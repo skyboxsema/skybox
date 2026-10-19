@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Image} from '@shopify/hydrogen';
 import type {ProductVariantFragment} from 'storefrontapi.generated';
 
@@ -28,12 +28,41 @@ export function ProductGallery({
     if (variantIndex >= 0) setActive(variantIndex);
   }, [variantIndex]);
 
+  // where the current touch started, so a horizontal swipe can change photos
+  const touchStart = useRef<{x: number; y: number} | null>(null);
+
   const current = allImages[active] ?? allImages[0];
   if (!current) return <div className="product-gallery" />;
 
+  const showPhoto = (step: number) =>
+    setActive(
+      (index) => (index + step + allImages.length) % allImages.length,
+    );
+
+  const onTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    touchStart.current = {x: touch.clientX, y: touch.clientY};
+  };
+
+  const onTouchEnd = (event: React.TouchEvent) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start || allImages.length < 2) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    // ignore short taps and mostly vertical (scrolling) gestures
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    showPhoto(dx < 0 ? 1 : -1);
+  };
+
   return (
     <div className="product-gallery">
-      <div className="product-image">
+      <div
+        className="product-image"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <Image
           alt={current.altText || 'Product Image'}
           aspectRatio="1/1"

@@ -282,7 +282,15 @@ function BuildBoxCategories({
                   id={category.handle}
                   key={category.id}
                 >
-                  <h2 id={`${category.handle}-title`}>{category.title}</h2>
+                  <div className="build-box-category-heading">
+                    <h2 id={`${category.handle}-title`}>{category.title}</h2>
+                    {category === boxCategory && !hasBox && (
+                      <p className="build-box-warning" role="status">
+                        <span aria-hidden="true">!</span>
+                        Choose a box first to start adding gifts
+                      </p>
+                    )}
+                  </div>
                   {locked && (
                     <p className="build-box-locked-note">
                       Choose your box first, then fill it with gifts.{' '}

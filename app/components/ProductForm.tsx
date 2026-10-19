@@ -1,9 +1,6 @@
-import {Suspense} from 'react';
+import {Suspense, useEffect, useRef} from 'react';
 import {Await, Link, useNavigate, useRouteLoaderData} from 'react-router';
-import {
-  type MappedProductOptions,
-  useOptimisticCart,
-} from '@shopify/hydrogen';
+import {type MappedProductOptions, useOptimisticCart} from '@shopify/hydrogen';
 import type {
   Maybe,
   ProductOptionValueSwatch,
@@ -26,6 +23,25 @@ export function ProductForm({
 }) {
   const navigate = useNavigate();
   const rootData = useRouteLoaderData<RootLoader>('root');
+  const {actionRef, barRef} = useCartBarReveal();
+
+  const cartControls = selectedVariant?.availableForSale ? (
+    <Suspense fallback={<ProductAddButton selectedVariant={selectedVariant} />}>
+      <Await
+        resolve={rootData?.cart}
+        errorElement={<ProductAddButton selectedVariant={selectedVariant} />}
+      >
+        {(cart) => (
+          <ProductCartControls cart={cart} selectedVariant={selectedVariant} />
+        )}
+      </Await>
+    </Suspense>
+  ) : (
+    <AddToCartButton disabled lines={[]}>
+      Sold out
+    </AddToCartButton>
+  );
+
   return (
     <div className="product-form">
       {productOptions.map((option) => {
@@ -106,31 +122,52 @@ export function ProductForm({
           </div>
         );
       })}
-      {selectedVariant?.availableForSale ? (
-        <Suspense
-          fallback={<ProductAddButton selectedVariant={selectedVariant} />}
-        >
-          <Await
-            resolve={rootData?.cart}
-            errorElement={
-              <ProductAddButton selectedVariant={selectedVariant} />
-            }
-          >
-            {(cart) => (
-              <ProductCartControls
-                cart={cart}
-                selectedVariant={selectedVariant}
-              />
-            )}
-          </Await>
-        </Suspense>
-      ) : (
-        <AddToCartButton disabled lines={[]}>
-          Sold out
-        </AddToCartButton>
-      )}
+      <div className="product-cart-action" ref={actionRef}>
+        {cartControls}
+      </div>
+      {/* mobile: slides up from the bottom of the screen in step with the
+          button above scrolling up under the header */}
+      <div className="product-cart-bar" ref={barRef}>
+        {cartControls}
+      </div>
     </div>
   );
+}
+
+/**
+ * Tracks how much of the in-page cart button has scrolled up under the header
+ * and slides the bottom bar in by the same amount, as `--reveal` (0 to 1).
+ * Writes the style directly so scrolling doesn't re-render the form.
+ */
+function useCartBarReveal() {
+  const actionRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const update = () => {
+      const action = actionRef.current;
+      const bar = barRef.current;
+      if (!action || !bar) return;
+      const headerBottom = Math.max(
+        document.querySelector('.header')?.getBoundingClientRect().bottom ?? 0,
+        0,
+      );
+      const {top, height} = action.getBoundingClientRect();
+      const hidden = height ? (headerBottom - top) / height : 0;
+      const reveal = Math.min(Math.max(hidden, 0), 1);
+      bar.style.setProperty('--reveal', String(reveal));
+      bar.toggleAttribute('inert', reveal < 1);
+    };
+    update();
+    window.addEventListener('scroll', update, {passive: true});
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  return {actionRef, barRef};
 }
 
 type SelectedVariant = NonNullable<
