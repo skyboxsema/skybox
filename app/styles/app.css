@@ -2181,3 +2181,186 @@ button.reset.quick-view-close:hover {
   font-size: 0.85rem;
   line-height: 1.5;
 }
+
+/*
+* --------------------------------------------------
+* components/CartSummary discounts
+* --------------------------------------------------
+*/
+.cart-discount-savings {
+  align-items: center;
+  color: var(--color-gold-deep);
+  display: flex;
+  justify-content: space-between;
+}
+
+.cart-discount-savings dd {
+  display: flex;
+}
+
+.cart-discounts {
+  margin: 0.75rem 0;
+}
+
+.cart-discount-applied {
+  align-items: flex-start;
+  display: flex;
+  font-size: 0.85rem;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.cart-discount-code {
+  background: var(--color-cream);
+  border: 1px dashed var(--color-gold);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.5rem;
+}
+
+.cart-discount-error {
+  color: #a3312a;
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+button.reset.cart-discount-remove {
+  font-size: 0.8rem;
+  text-decoration: underline;
+}
+
+.cart-discount-form {
+  display: flex;
+}
+
+.cart-discount-form input {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  text-transform: uppercase;
+}
+
+.cart-discount-form input::placeholder {
+  text-transform: none;
+}
+
+.cart-discount-form .button {
+  padding: 0.6rem 1.25rem;
+}
+
+/*
+* --------------------------------------------------
+* components/FirstOrderOffer
+* --------------------------------------------------
+*/
+button.reset.offer-tab {
+  background: var(--color-dark);
+  border: 1px solid var(--color-gold);
+  border-left: 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  color: var(--color-gold-light);
+  left: 0;
+  padding: 1rem 0.55rem;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: padding 200ms;
+  z-index: 9;
+}
+
+button.reset.offer-tab:hover {
+  padding-left: 0.85rem;
+}
+
+.offer-tab span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: rotate(180deg);
+  writing-mode: vertical-rl;
+}
+
+.offer-dialog {
+  background: #000;
+  border: 0;
+  color: var(--color-light);
+  /* centred in the viewport (the global reset zeroes dialog margins) */
+  inset: 0;
+  margin: auto;
+  max-height: calc(100dvh - 2rem);
+  max-width: min(24rem, calc(100vw - 2rem));
+  overflow-y: auto;
+  padding: 0 0 1.5rem;
+  width: 100%;
+}
+
+.offer-dialog[open] {
+  animation: build-box-intro-in 400ms ease-out;
+}
+
+.offer-dialog::backdrop {
+  background: rgba(21, 18, 14, 0.65);
+}
+
+.offer-dialog-banner {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+button.reset.offer-dialog-close {
+  border: 1px solid rgba(226, 201, 146, 0.5);
+  border-radius: 50%;
+  color: var(--color-gold-light);
+  display: grid;
+  height: 2.25rem;
+  place-items: center;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  transition: border-color 200ms;
+  width: 2.25rem;
+}
+
+button.reset.offer-dialog-close:hover {
+  border-color: var(--color-gold-light);
+}
+
+.offer-dialog-close svg {
+  fill: none;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  width: 1rem;
+}
+
+.offer-dialog-actions {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+
+.offer-apply.button {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-dark);
+  width: 100%;
+}
+
+.offer-apply.button:hover:not(:disabled) {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold-light);
+}
+
+button.reset.offer-copy {
+  color: var(--color-gold-light);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-decoration: underline;
+  text-transform: uppercase;
+}

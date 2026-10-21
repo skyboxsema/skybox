@@ -20,6 +20,8 @@ import {PageLayout} from './components/PageLayout';
 
 export type RootLoader = typeof loader;
 
+const GA_MEASUREMENT_ID = 'G-40CYVGT8F3';
+
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
  */
@@ -137,6 +139,21 @@ export function Layout({children}: {children?: React.ReactNode}) {
         <link rel="stylesheet" href={appStyles}></link>
         <Meta />
         <Links />
+        {/* Google tag (gtag.js) */}
+        <script
+          async
+          nonce={nonce}
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        />
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}');`,
+          }}
+        />
       </head>
       <body>
         {children}

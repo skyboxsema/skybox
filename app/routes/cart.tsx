@@ -35,7 +35,10 @@ export async function action({request, context}: Route.ActionArgs) {
       result = await cart.removeLines(inputs.lineIds);
       break;
     case CartForm.ACTIONS.DiscountCodesUpdate: {
-      const formDiscountCode = inputs.discountCode;
+      const formDiscountCode =
+        typeof inputs.discountCode === 'string'
+          ? inputs.discountCode.trim()
+          : inputs.discountCode;
 
       // User inputted discount code
       const discountCodes = (
@@ -43,7 +46,7 @@ export async function action({request, context}: Route.ActionArgs) {
       ) as string[];
 
       // Combine discount codes already applied on cart
-      discountCodes.push(...inputs.discountCodes);
+      discountCodes.push(...(inputs.discountCodes ?? []));
 
       result = await cart.updateDiscountCodes(discountCodes);
       break;
